@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#E8F5E9">
+    <title>MtiGo</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: -apple-system, sans-serif; background: #fff; }
+        #map { height: 100%; width: 100%; background: #E8F5E9; z-index: 0; }
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; display: none; flex-direction: column; background: white; }
+        .screen.active { display: flex; }
+        .bottom-sheet { transition: transform 0.3s ease-in-out; transform: translateY(100%); z-index: 3000; }
+        .bottom-sheet.active { transform: translateY(0); }
+        .leaflet-control-attribution { display: none; }
+        .custom-pin { background: transparent; border: none; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #000; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <!-- WELCOME -->
+    <div id="screen-welcome" class="screen active" style="background-color: #E8F5E9; z-index: 5000;">
+        <div class="flex-1 flex flex-col items-center justify-center p-8">
+            <div class="w-24 h-24 bg-black rounded-3xl flex items-center justify-center mb-6 shadow-xl">
+                <span class="text-6xl">📍</span>
+            </div>
+            <h1 class="text-4xl font-black text-gray-900 tracking-tight">MtiGo</h1>
+            <p class="text-gray-600 text-center mt-4 text-lg font-medium">Información en tiempo real. Gana dinero ayudando.</p>
+        </div>
+        <div class="p-6 pb-12">
+            <button onclick="initApp()" class="w-full bg-black text-white font-bold text-xl py-5 rounded-2xl shadow-lg active:scale-95 transition-transform">EMPEZAR</button>
+        </div>
+    </div>
+
+    <!-- MAPA -->
+    <div id="screen-map" class="screen" style="background: transparent;">
+        <div id="map"></div>
+        <div class="absolute top-6 right-4 z-[1000]">
+            <button onclick="navigateTo('screen-wallet')" class="bg-white shadow-lg rounded-full py-2 px-4 flex items-center space-x-2 active:scale-95 transition-transform">
+                <span class="text-green-600 w-5 h-5">💵</span>
+                <span id="header-balance" class="font-bold text-gray-800 text-sm">$0 CLP</span>
+            </button>
+        </div>
+        <div class="absolute bottom-6 left-0 right-0 z-[1000] flex justify-between items-center px-6">
+            <button onclick="navigateTo('screen-wallet')" class="w-14 h-14 bg-white rounded-full shadow-xl flex items-center justify-center active:scale-95">
+                <svg class="w-7 h-7 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+            </button>
+            <button onclick="toggleModal('modal-create')" class="w-16 h-16 bg-black rounded-full shadow-2xl flex items-center justify-center active:scale-95">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+            </button>
+        </div>
+        <div id="map-loader" class="absolute inset-0 z-[999] flex items-center justify-center bg-white bg-opacity-80">
+            <div class="loader"></div>
+        </div>
+    </div>
+
+    <!-- CREAR SOLICITUD -->
+    <div id="modal-create" class="bottom-sheet absolute bottom-0 left-0 right-0 z-[3000] bg-white rounded-t-3xl shadow-2xl p-6 h-[65%] flex flex-col">
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full self-center mb-6 cursor-pointer" onclick="toggleModal('modal-create')"></div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Crear Solicitud</h2>
+        <p class="text-gray-500 mb-6">¿Qué necesitas saber ahora?</p>
+        <input id="input-prompt" type="text" placeholder="Ej: ¿Cómo está la fila?" class="w-full p-4 bg-gray-100 rounded-2xl mb-6 text-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+        <div class="flex justify-around mb-8">
+            <div class="flex flex-col items-center">
+                <button class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center active:scale-95 border-2 border-green-500"><span class="text-4xl">📸</span></button>
+                <span class="mt-2 font-semibold text-gray-700">Foto</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <button class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center active:scale-95 shadow-sm"><span class="text-4xl">😊</span></button>
+                <span class="mt-2 font-semibold text-gray-700">Emoji</span>
+            </div>
+        </div>
+        <div class="mt-auto">
+            <div class="flex justify-between text-gray-600 mb-4 font-medium">
+                <span>Costo: <span class="text-black font-bold">$100 CLP</span></span>
+                <span>Expira en: <span class="text-black font-bold">5 min</span></span>
+            </div>
+            <button onclick="publishRequest()" class="w-full bg-green-500 text-black font-bold text-lg py-4 rounded-2xl shadow-lg active:scale-95">PUBLICAR Y PAGAR $100</button>
+        </div>
+    </div>
+
+    <!-- RESPONDER SOLICITUD -->
+    <div id="modal-respond" class="bottom-sheet absolute bottom-0 left-0 right-0 z-[3000] bg-white rounded-t-3xl shadow-2xl p-6 h-[60%] flex flex-col">
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full self-center mb-6 cursor-pointer" onclick="toggleModal('modal-respond')"></div>
+        <div class="flex items-center mb-4">
+            <div class="w-10 h-10 bg-gray-200 rounded-full mr-3 flex items-center justify-center">👤</div>
+            <div>
+                <h3 class="font-bold text-lg">Solicitud cercana</h3>
+                <p class="text-sm text-gray-500">A menos de 500 metros</p>
+            </div>
+        </div>
+        <div class="bg-gray-100 p-4 rounded-2xl mb-6">
+            <p id="respond-text" class="text-gray-800 text-lg">Cargando...</p>
+        </div>
+        <div class="mt-auto">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-gray-600 font-medium">Pago:</span>
+                <span id="respond-price" class="text-2xl font-black text-green-600">$0</span>
+            </div>
+            <button onclick="acceptRequest()" class="w-full bg-black text-white font-bold text-lg py-4 rounded-2xl shadow-lg active:scale-95 flex items-center justify-center">
+                <span class="mr-2">📷</span> TOMAR FOTO Y GANAR
+            </button>
+        </div>
+    </div>
+
+    <!-- WALLET -->
+    <div id="screen-wallet" class="screen bg-gray-50">
+        <div class="bg-white p-6 pt-12 shadow-sm flex items-center">
+            <button onclick="navigateTo('screen-map')" class="mr-4 p-2 hover:bg-gray-100 rounded-full">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <h2 class="text-xl font-bold">Mi Billetera</h2>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6">
+            <div class="bg-black text-white p-6 rounded-3xl shadow-xl mb-6">
+                <p class="text-gray-400 text-sm mb-2">Saldo Disponible</p>
+                <h1 id="wallet-balance" class="text-4xl font-black">$0 <span class="text-lg font-normal text-gray-400">CLP</span></h1>
+                <button class="mt-6 w-full bg-green-500 text-black font-bold py-3 rounded-xl active:scale-95">RETIRAR FONDOS</button>
+            </div>
+            <h3 class="font-bold text-gray-700 mb-4">Historial</h3>
+            <div class="space-y-3">
+                <div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">📸</div>
+                        <div><p class="font-semibold text-sm">Solicitud creada</p><p class="text-xs text-gray-400">Hace un momento</p></div>
+                    </div>
+                    <p class="font-bold text-red-500">- $100</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= CONFIGURACIÓN SUPABASE =================
+        // Si quieres conectar Supabase más tarde, pon tus claves aquí entre comillas.
+        // Si lo dejas así, la app funcionará en "Modo Demo" sin base de datos.
+        const SUPABASE_URL = ''; 
+        const SUPABASE_KEY = '';
+        let sb = null;
+        
+        // Modo Demo (Si no hay claves de Supabase)
+        let CURRENT_USER_ID = 'demo-user';
+        let DEMO_BALANCE = 1500;
+        let map = null;
+        let activeMarkers = [];
+
+        // Inicializar Supabase si hay claves
+        if (SUPABASE_URL && SUPABASE_KEY) {
+            sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
+
+        // ================= LÓGICA DE INICIO =================
+        async function initApp() {
+            navigateTo('screen-map');
+            initMap();
+            
+            if (sb) {
+                // Modo Base de datos real
+                const { data: user } = await sb.from('users').select('*').eq('phone', '+56912345678').single();
+                CURRENT_USER_ID = user.id;
+                updateWalletUI(user.wallet_balance);
+            } else {
+                // Modo Demo
+                updateWalletUI(DEMO_BALANCE);
+                setTimeout(() => {
+                    document.getElementById('map-loader').style.display = 'none';
+                    loadDemoPins();
+                }, 500);
+            }
+        }
+
+        function updateWalletUI(balance) {
+            document.getElementById('header-balance').innerText = `$${balance.toLocaleString()} CLP`;
+            document.getElementById('wallet-balance').innerHTML = `$${balance.toLocaleString()} <span class="text-lg font-normal text-gray-400">CLP</span>`;
+        }
+
+        // ================= NAVEGACIÓN Y MODALES =================
+        function navigateTo(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            if(screenId === 'screen-map' && map) setTimeout(() => map.invalidateSize(), 100);
+        }
+
+        function toggleModal(modalId) {
+            document.getElementById(modalId).classList.toggle('active');
+        }
+
+        // ================= LÓGICA DEL MAPA =================
+        function initMap() {
+            map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-33.4489, -70.6693], 16);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+            
+            if (sb) {
+                fetchRequests();
+            }
+            
+            map.on('click', function() {
+                if(document.getElementById('modal-create').classList.contains('active')) toggleModal('modal-create');
+                if(document.getElementById('modal-respond').classList.contains('active')) toggleModal('modal-respond');
+            });
+        }
+
+        // Pines de Demostración (Si no usas Supabase)
+        function loadDemoPins() {
+            const demoData = [
+                { lat: -33.4490, lng: -70.6680, type: 'photo', price: 100, prompt_text: '¿Cómo está la fila?' },
+                { lat: -33.4480, lng: -70.6700, type: 'emoji', price: 50, prompt_text: '¿Hay taco?' }
+            ];
+            drawPins(demoData);
+        }
+
+        function drawPins(requests) {
+            activeMarkers.forEach(m => map.removeLayer(m));
+            activeMarkers = [];
+
+            requests.forEach(req => {
+                const color = req.type === 'photo' ? '#1A1A1A' : '#00E676';
+                const textColor = req.type === 'photo' ? 'white' : 'black';
+                const icon = req.type === 'photo' ? '📸' : '🚧';
+                
+                const pinHtml = `<div style="background:${color};color:${textColor};padding:6px 12px;border-radius:20px;font-weight:bold;box-shadow:0 4px 6px rgba(0,0,0,0.3);display:flex;align-items:center;gap:4px;">${icon} <span>$${req.price}</span></div>`;
+                const pinIcon = L.divIcon({ className: 'custom-pin', html: pinHtml, iconSize: [60, 30], iconAnchor: [30, 15] });
+                
+                const marker = L.marker([req.lat, req.lng], {icon: pinIcon}).addTo(map);
+                marker.on('click', () => {
+                    document.getElementById('respond-text').innerText = `${req.type === 'photo' ? '📸' : '🚧'} "${req.prompt_text}"`;
+                    document.getElementById('respond-price').innerText = `$${req.price} CLP`;
+                    toggleModal('modal-respond');
+                });
+                activeMarkers.push(marker);
+            });
+        }
+
+        // ================= LEER DE LA BASE DE DATOS (GET) =================
+        async function fetchRequests() {
+            const { data: requests, error } = await sb.rpc('get_nearby_requests', { user_lat: -33.4489, user_lng: -70.6693 });
+            if (error) { console.error('Error:', error); return; }
+            drawPins(requests);
+            document.getElementById('map-loader').style.display = 'none';
+        }
+
+        // ================= ESCRIBIR EN LA BASE DE DATOS (INSERT) =================
+        async function publishRequest() {
+            const promptText = document.getElementById('input-prompt').value || '¿Qué ves ahora?';
+            
+            if (sb) {
+                // Modo Supabase
+                const { error } = await sb.from('requests').insert([
+                    { requester_id: CURRENT_USER_ID, type: 'photo', prompt_text: promptText, price: 100, location: `POINT(-70.6693 -33.4489)` }
+                ]);
+                if (error) { alert('❌ Error: ' + error.message); return; }
+
+                const { data: user } = await sb.from('users').select('wallet_balance').eq('id', CURRENT_USER_ID).single();
+                const newBalance = user.wallet_balance - 100;
+                await sb.from('users').update({ wallet_balance: newBalance }).eq('id', CURRENT_USER_ID);
+                updateWalletUI(newBalance);
+                fetchRequests();
+            } else {
+                // Modo Demo
+                DEMO_BALANCE -= 100;
+                updateWalletUI(DEMO_BALANCE);
+                loadDemoPins(); // Recarga para mostrarlo (aunque no se verá nuevo en demo)
+            }
+
+            document.getElementById('input-prompt').value = '';
+            toggleModal('modal-create');
+            alert('✅ Solicitud publicada. Se descontaron $100 CLP.');
+        }
+
+        function acceptRequest() {
+            alert('✅ ¡Foto enviada! El dinero está en validación.');
+            toggleModal('modal-respond');
+        }
+    </script>
+</body>
+</html>
