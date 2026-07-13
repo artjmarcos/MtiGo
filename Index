@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#E8F5E9">
+    <title>MtiGo</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #fff;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+            background-color: #E8F5E9;
+            z-index: 0;
+        }
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1000;
+            display: none; /* Oculto por defecto */
+            flex-direction: column;
+            background: white;
+        }
+        .screen.active {
+            display: flex;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .bottom-sheet {
+            transition: transform 0.3s ease-in-out;
+            transform: translateY(100%);
+            z-index: 3000;
+        }
+        .bottom-sheet.active {
+            transform: translateY(0);
+        }
+        .leaflet-control-attribution { display: none; }
+        .custom-pin {
+            background: transparent;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========================================== -->
+    <!-- PANTALLA 1: WELCOME / SPLASH               -->
+    <!-- ========================================== -->
+    <div id="screen-welcome" class="screen active" style="background-color: #E8F5E9; z-index: 5000;">
+        <div class="flex-1 flex flex-col items-center justify-center p-8">
+            <div class="w-24 h-24 bg-black rounded-3xl flex items-center justify-center mb-6 shadow-xl">
+                <span class="text-6xl">📍</span>
+            </div>
+            <h1 class="text-4xl font-black text-gray-900 tracking-tight">MtiGo</h1>
+            <p class="text-gray-600 text-center mt-4 text-lg font-medium">Información en tiempo real. Gana dinero ayudando.</p>
+        </div>
+        <div class="p-6 pb-12">
+            <button onclick="navigateTo('screen-map')" class="w-full bg-black text-white font-bold text-xl py-5 rounded-2xl shadow-lg active:scale-95 transition-transform">
+                EMPEZAR
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- PANTALLA 2: MAPA (HOME)                    -->
+    <!-- ========================================== -->
+    <div id="screen-map" class="screen" style="background: transparent;">
+        <div id="map"></div>
+
+        <!-- Header: Wallet -->
+        <div class="absolute top-6 right-4 z-[1000]">
+            <button onclick="navigateTo('screen-wallet')" class="bg-white shadow-lg rounded-full py-2 px-4 flex items-center space-x-2 active:scale-95 transition-transform">
+                <span class="text-green-600 w-5 h-5">💵</span>
+                <span class="font-bold text-gray-800 text-sm">$1.500 CLP</span>
+            </button>
+        </div>
+
+        <!-- Botones Flotantes -->
+        <div class="absolute bottom-6 left-0 right-0 z-[1000] flex justify-between items-center px-6">
+            <button onclick="navigateTo('screen-wallet')" class="w-14 h-14 bg-white rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-transform">
+                <svg class="w-7 h-7 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+            </button>
+            <button onclick="toggleModal('modal-create')" class="w-16 h-16 bg-black rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-transform">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- PANTALLA 3: CREAR SOLICITUD (BOTTOM SHEET) -->
+    <!-- ========================================== -->
+    <div id="modal-create" class="bottom-sheet absolute bottom-0 left-0 right-0 z-[3000] bg-white rounded-t-3xl shadow-2xl p-6 h-[65%] flex flex-col">
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full self-center mb-6 cursor-pointer" onclick="toggleModal('modal-create')"></div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Crear Solicitud</h2>
+        <p class="text-gray-500 mb-6">¿Qué necesitas saber ahora?</p>
+        <input type="text" placeholder="Ej: ¿Cómo está la fila del banco?" class="w-full p-4 bg-gray-100 rounded-2xl mb-6 text-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+        <div class="flex justify-around mb-8">
+            <div class="flex flex-col items-center">
+                <button class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center active:scale-95 shadow-sm border-2 border-green-500">
+                    <span class="text-4xl">📸</span>
+                </button>
+                <span class="mt-2 font-semibold text-gray-700">Foto</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <button class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center active:scale-95 shadow-sm">
+                    <span class="text-4xl">😊</span>
+                </button>
+                <span class="mt-2 font-semibold text-gray-700">Emoji</span>
+            </div>
+        </div>
+        <div class="mt-auto">
+            <div class="flex justify-between text-gray-600 mb-4 font-medium">
+                <span>Costo: <span class="text-black font-bold">$100 CLP</span></span>
+                <span>Expira en: <span class="text-black font-bold">5 min</span></span>
+            </div>
+            <button onclick="publishRequest()" class="w-full bg-green-500 text-black font-bold text-lg py-4 rounded-2xl shadow-lg active:scale-95 transition-transform">
+                PUBLICAR Y PAGAR $100
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- PANTALLA 4: RESPONDER SOLICITUD (BOTTOM SHEET) -->
+    <!-- ========================================== -->
+    <div id="modal-respond" class="bottom-sheet absolute bottom-0 left-0 right-0 z-[3000] bg-white rounded-t-3xl shadow-2xl p-6 h-[60%] flex flex-col">
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full self-center mb-6 cursor-pointer" onclick="toggleModal('modal-respond')"></div>
+        <div class="flex items-center mb-4">
+            <div class="w-10 h-10 bg-gray-200 rounded-full mr-3"></div>
+            <div>
+                <h3 class="font-bold text-lg">Solicitud de Ana</h3>
+                <p class="text-sm text-gray-500">A 200 metros de ti</p>
+            </div>
+        </div>
+        <div class="bg-gray-100 p-4 rounded-2xl mb-6">
+            <p class="text-gray-800 text-lg">📸 "¿Está abierto el local ahora?"</p>
+        </div>
+        <div class="mt-auto">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-gray-600 font-medium">Pago:</span>
+                <span class="text-2xl font-black text-green-600">$100 CLP <span class="text-sm text-gray-500 font-normal">(Ganas $85)</span></span>
+            </div>
+            <button onclick="acceptRequest()" class="w-full bg-black text-white font-bold text-lg py-4 rounded-2xl shadow-lg active:scale-95 transition-transform flex items-center justify-center">
+                <span class="mr-2">📷</span> TOMAR FOTO Y GANAR $85
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- PANTALLA 5: WALLET (BILLETERA)             -->
+    <!-- ========================================== -->
+    <div id="screen-wallet" class="screen bg-gray-50">
+        <div class="bg-white p-6 pt-12 shadow-sm flex items-center">
+            <button onclick="navigateTo('screen-map')" class="mr-4 p-2 hover:bg-gray-100 rounded-full">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <h2 class="text-xl font-bold">Mi Billetera</h2>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-6">
+            <!-- Saldo -->
+            <div class="bg-black text-white p-6 rounded-3xl shadow-xl mb-6">
+                <p class="text-gray-400 text-sm mb-2">Saldo Disponible</p>
+                <h1 class="text-4xl font-black">$1.500 <span class="text-lg font-normal text-gray-400">CLP</span></h1>
+                <button class="mt-6 w-full bg-green-500 text-black font-bold py-3 rounded-xl active:scale-95 transition-transform">RETIRAR FONDOS</button>
+            </div>
+
+            <!-- Historial -->
+            <h3 class="font-bold text-gray-700 mb-4">Historial</h3>
+            <div class="space-y-3">
+                <div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">📸</div>
+                        <div>
+                            <p class="font-semibold text-sm">Respondiste a Ana</p>
+                            <p class="text-xs text-gray-400">Hace 2 minutos</p>
+                        </div>
+                    </div>
+                    <p class="font-bold text-green-600">+ $85</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">➕</div>
+                        <div>
+                            <p class="font-semibold text-sm">Creaste solicitud</p>
+                            <p class="text-xs text-gray-400">Hace 10 minutos</p>
+                        </div>
+                    </div>
+                    <p class="font-bold text-red-500">- $100</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">💳</div>
+                        <div>
+                            <p class="font-semibold text-sm">Carga de saldo</p>
+                            <p class="text-xs text-gray-400">Ayer</p>
+                        </div>
+                    </div>
+                    <p class="font-bold text-blue-600">+ $1.000</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= NAVEGACIÓN ENTRE PANTALLAS =================
+        function navigateTo(screenId) {
+            // Ocultar todas las pantallas
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            // Mostrar la pantalla solicitada
+            document.getElementById(screenId).classList.add('active');
+            
+            // Si volvemos al mapa, refrescar el tamaño (Leaflet lo requiere a veces)
+            if(screenId === 'screen-map') {
+                setTimeout(() => map.invalidateSize(), 100);
+            }
+        }
+
+        // ================= LÓGICA DE MODALES (BOTTOM SHEETS) =================
+        function toggleModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.toggle('active');
+        }
+
+        function publishRequest() {
+            alert('✅ Solicitud publicada. Se descontaron $100 CLP de tu saldo.');
+            toggleModal('modal-create');
+        }
+
+        function acceptRequest() {
+            alert('✅ ¡Foto enviada! Ganaste $85 CLP. El dinero está en escrow por 2 minutos.');
+            toggleModal('modal-respond');
+        }
+
+        // ================= LÓGICA DEL MAPA =================
+        const map = L.map('map', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView([-33.4489, -70.6693], 16);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // Pines (Solicitudes)
+        const pinPhoto = L.divIcon({
+            className: 'custom-pin',
+            html: `<div style="background: #1A1A1A; color: white; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 4px;">
+                     <span>📸</span> <span>$100</span>
+                   </div>`,
+            iconSize: [60, 30],
+            iconAnchor: [30, 15]
+        });
+
+        const pinEmoji = L.divIcon({
+            className: 'custom-pin',
+            html: `<div style="background: #00E676; color: black; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 4px;">
+                     <span>🚧</span> <span>$50</span>
+                   </div>`,
+            iconSize: [60, 30],
+            iconAnchor: [30, 15]
+        });
+
+        // Añadir pines con evento de click
+        L.marker([-33.4490, -70.6680], {icon: pinPhoto}).addTo(map).on('click', () => toggleModal('modal-respond'));
+        L.marker([-33.4480, -70.6700], {icon: pinEmoji}).addTo(map).on('click', () => toggleModal('modal-respond'));
+        L.marker([-33.4475, -70.6685], {icon: pinPhoto}).addTo(map).on('click', () => toggleModal('modal-respond'));
+
+        // Cerrar modales si haces clic en el mapa
+        map.on('click', function() {
+            if(document.getElementById('modal-create').classList.contains('active')) toggleModal('modal-create');
+            if(document.getElementById('modal-respond').classList.contains('active')) toggleModal('modal-respond');
+        });
+    </script>
+</body>
+</html>
