@@ -51,7 +51,10 @@
                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
             </button>
         </div>
-        <div id="map-loader" class="absolute inset-0 z-[999] flex items-center justify-center bg-white bg-opacity-80"><div class="loader"></div></div>
+        <div id="map-loader" class="absolute inset-0 z-[999] flex flex-col items-center justify-center bg-white bg-opacity-90">
+            <div class="loader mb-4"></div>
+            <p class="text-gray-500 font-medium">Buscando ubicación...</p>
+        </div>
     </div>
 
     <div id="modal-create" class="bottom-sheet absolute bottom-0 left-0 right-0 z-[3000] bg-white rounded-t-3xl shadow-2xl p-6 h-[65%] flex flex-col">
@@ -137,35 +140,47 @@
         async function initApp() {
             navigateTo('screen-map');
             initMap();
-            alert("1. Conectando a la base de datos..."); // ALERTA DE PRUEBA
+            
+            // 1. Conectar a BD
             const { data: user } = await sb.from('users').select('*').eq('phone', '+56912345678').single();
-            
-            if (!user) { alert("Error: No se pudo conectar a Supabase. Revisa tu clave."); return; }
-            
-            CURRENT_USER_ID = user.id;
-            updateWalletUI(user.wallet_balance);
-            alert("2. Base de datos conectada. Tu saldo es: $" + user.wallet_balance); // ALERTA DE PRUEBA
+            if (user) {
+                CURRENT_USER_ID = user.id;
+                updateWalletUI(user.wallet_balance);
+            } else {
+                document.getElementById('map-loader').innerHTML = '<p class="text-red-500 font-bold p-4 text-center">Error: Revisa tu clave de Supabase.</p>';
+                return; // Detiene todo si hay error
+            }
 
-            alert("3. Buscando tu GPS..."); // ALERTA DE PRUEBA
+            // 2. Intentar GPS con límite de 5 segundos
             if (navigator.geolocation) {
+                // Si en 5 segundos no responde el GPS, ocultamos el loader y cargamos igual
+                const gpsTimeout = setTimeout(() => {
+                    hideLoaderAndFetch();
+                }, 5000);
+
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
+                        clearTimeout(gpsTimeout); // Cancelamos el timeout porque sí encontró el GPS
                         CURRENT_USER_LAT = position.coords.latitude;
                         CURRENT_USER_LNG = position.coords.longitude;
-                        alert("✅ ¡GPS Encontrado! Lat: " + CURRENT_USER_LAT); // ALERTA DE ÉXITO
                         map.setView([CURRENT_USER_LAT, CURRENT_USER_LNG], 16);
-                        fetchRequests();
                         L.marker([CURRENT_USER_LAT, CURRENT_USER_LNG]).addTo(map).bindPopup('📍 Tú estás aquí').openPopup();
+                        hideLoaderAndFetch();
                     },
                     (error) => { 
-                        alert("❌ Error de GPS: " + error.message + "\n\nCódigo: " + error.code + "\n\nRevisa permisos de ubicación del navegador."); 
-                        fetchRequests(); // Cargamos igual en Santiago
-                    }
+                        clearTimeout(gpsTimeout); // Cancelamos el timeout
+                        hideLoaderAndFetch(); // Ocultamos loader y cargamos igual
+                    },
+                    { timeout: 5000, enableHighAccuracy: false } // Menos precisión, más rápido
                 );
-            } else { 
-                alert("Tu navegador no soporta GPS."); 
-                fetchRequests(); 
+            } else {
+                hideLoaderAndFetch();
             }
+        }
+
+        function hideLoaderAndFetch() {
+            document.getElementById('map-loader').style.display = 'none';
+            fetchRequests();
         }
 
         function updateWalletUI(balance) {
@@ -192,7 +207,7 @@
 
         async function fetchRequests() {
             const { data: requests, error } = await sb.rpc('get_nearby_requests', { user_lat: CURRENT_USER_LAT, user_lng: CURRENT_USER_LNG });
-            if (error) { console.error('Error:', error); document.getElementById('map-loader').style.display = 'none'; return; }
+            if (error) { console.error('Error:', error); return; }
             activeMarkers.forEach(m => map.removeLayer(m));
             activeMarkers = [];
             requests.forEach(req => {
@@ -209,7 +224,6 @@
                 });
                 activeMarkers.push(marker);
             });
-            document.getElementById('map-loader').style.display = 'none';
         }
 
         async function publishRequest() {
@@ -224,7 +238,7 @@
             updateWalletUI(newBalance);
             document.getElementById('input-prompt').value = '';
             toggleModal('modal-create');
-            alert('✅ Solicitud publicada en tu ubicación real.');
+            alert('✅ Solicitud publicada.');
             fetchRequests();
         }
 
