@@ -127,8 +127,8 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://tjyaqozcurtqfjiyefbv.supabase.co'; 
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqeWFxb3pjdXJ0cWZqbHllZmJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjQ1MTgsImV4cCI6MjA5OTU0MDUxOH0.i0QiuAQOXdVx5XZB8JfRGG6A1hwHn10ftuXLAbytOiI';
+        const SUPABASE_URL = 'https://auouhuhmbhamqbjmxwyv.supabase.co'; 
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1b3VodWhtYmhhbXFiam14d3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzY1ODAsImV4cCI6MjA5OTYxMjU4MH0.fVTZeQg-a_YT3ATJ2pN-VpV3DQS3p7I25_56fIHqXFY';
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         let CURRENT_USER_ID = null;
