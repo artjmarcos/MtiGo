@@ -1,5 +1,4 @@
-    
-        <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -126,7 +125,7 @@
 
     <script>
         const SUPABASE_URL = 'https://tjyaqozcurtqfjiyefbv.supabase.co'; 
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqeWFxb3pjdXJ0cWZqbHllZmJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjQ1MTgsImV4cCI6MjA5OTU0MDUxOH0.i0QiuAQOXdVx5XZB8JfRGG6A1hwHn10ftuXLAbytOiI'; // 
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqeWFxb3pjdXJ0cWZqbHllZmJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjQ1MTgsImV4cCI6MjA5OTU0MDUxOH0.i0QiuAQOXdVx5XZB8JfRGG6A1hwHn10ftuXLAbytOiI';
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         let CURRENT_USER_ID = null;
@@ -138,22 +137,35 @@
         async function initApp() {
             navigateTo('screen-map');
             initMap();
+            alert("1. Conectando a la base de datos..."); // ALERTA DE PRUEBA
             const { data: user } = await sb.from('users').select('*').eq('phone', '+56912345678').single();
+            
+            if (!user) { alert("Error: No se pudo conectar a Supabase. Revisa tu clave."); return; }
+            
             CURRENT_USER_ID = user.id;
             updateWalletUI(user.wallet_balance);
+            alert("2. Base de datos conectada. Tu saldo es: $" + user.wallet_balance); // ALERTA DE PRUEBA
 
+            alert("3. Buscando tu GPS..."); // ALERTA DE PRUEBA
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         CURRENT_USER_LAT = position.coords.latitude;
                         CURRENT_USER_LNG = position.coords.longitude;
+                        alert("✅ ¡GPS Encontrado! Lat: " + CURRENT_USER_LAT); // ALERTA DE ÉXITO
                         map.setView([CURRENT_USER_LAT, CURRENT_USER_LNG], 16);
                         fetchRequests();
                         L.marker([CURRENT_USER_LAT, CURRENT_USER_LNG]).addTo(map).bindPopup('📍 Tú estás aquí').openPopup();
                     },
-                    (error) => { alert("No pudimos obtener tu GPS."); fetchRequests(); }
+                    (error) => { 
+                        alert("❌ Error de GPS: " + error.message + "\n\nCódigo: " + error.code + "\n\nRevisa permisos de ubicación del navegador."); 
+                        fetchRequests(); // Cargamos igual en Santiago
+                    }
                 );
-            } else { alert("Tu navegador no soporta GPS."); fetchRequests(); }
+            } else { 
+                alert("Tu navegador no soporta GPS."); 
+                fetchRequests(); 
+            }
         }
 
         function updateWalletUI(balance) {
