@@ -1,0 +1,13 @@
+{
+  "name": "mtigo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test:db": "node --test --test-reporter=spec tests/db/*.test.mjs"
+  },
+  "devDependencies": {
+    "embedded-postgres": "^18.7.0-beta.19",
+    "pg": "^8.23.1"
+  }
+}
