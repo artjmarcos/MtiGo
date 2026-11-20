@@ -11,8 +11,8 @@ Todo se puede hacer desde el navegador del teléfono. Tiempo estimado: 40–60 m
 3. (Recomendado) **Database → Extensions** → activa `pg_cron`. Luego ejecuta en el SQL Editor
    `supabase/migrations/20261120000002_vencimiento_automatico.sql`.
 4. **Authentication → URL Configuration**:
-   - Site URL: `https://artjmarcos.github.io/mtigo/`
-   - Redirect URLs: agrega `https://artjmarcos.github.io/mtigo/**`
+   - Site URL: `https://artjmarcos.github.io/MtiGo/`
+   - Redirect URLs: agrega `https://artjmarcos.github.io/MtiGo/**`
 5. **Authentication → Sign In / Providers → Email**: deja activo "Confirm email".
 6. **Correos (importante):** el correo incluido en Supabase envía muy pocos mensajes por hora (solo sirve para probar).
    Para el piloto configura un SMTP propio en **Authentication → Emails → SMTP Settings**
@@ -47,7 +47,7 @@ En el repositorio: **Settings → Secrets and variables → Actions**.
 
 | Nombre | Valor |
 |---|---|
-| `VITE_PUBLIC_WEB_URL` | `https://artjmarcos.github.io/mtigo/` |
+| `VITE_PUBLIC_WEB_URL` | `https://artjmarcos.github.io/MtiGo/` |
 | `VITE_SUPPORT_EMAIL` | tu correo de contacto |
 
 > 🔐 **La llave de firma (`mtigo-upload.jks`) y sus contraseñas son críticas.** Guárdalas en un lugar seguro
@@ -59,9 +59,9 @@ En el repositorio: **Settings → Secrets and variables → Actions**.
 1. **Settings → Pages → Source:** "GitHub Actions".
 2. **Actions → "Web y documentos legales" → Run workflow**.
 3. Revisa que abran:
-   - App web: `https://artjmarcos.github.io/mtigo/`
-   - Privacidad: `https://artjmarcos.github.io/mtigo/legal/privacidad.html`
-   - Eliminar cuenta: `https://artjmarcos.github.io/mtigo/legal/eliminar-cuenta.html`
+   - App web: `https://artjmarcos.github.io/MtiGo/`
+   - Privacidad: `https://artjmarcos.github.io/MtiGo/legal/privacidad.html`
+   - Eliminar cuenta: `https://artjmarcos.github.io/MtiGo/legal/eliminar-cuenta.html`
 4. Antes de publicar en Play, edita en `public/legal/*.html` el texto **[CORREO DE CONTACTO — COMPLETAR ANTES DE PUBLICAR]**.
 
 ## 5. Generar el AAB y el APK
