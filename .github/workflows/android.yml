@@ -1,0 +1,103 @@
+# Compila MtiGo! para Android en los servidores de GitHub (gratis en repositorios públicos).
+# Produce: AAB firmado (para Google Play) y APK firmado (para instalar directo en un teléfono).
+# Ejecutar: GitHub > Actions > "Android (AAB + APK)" > Run workflow.
+name: Android (AAB + APK)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: 'versionCode (entero, debe subir en cada envío a Google Play)'
+        required: true
+        default: '1'
+      version_name:
+        description: 'versionName visible (ej: 0.1.0)'
+        required: true
+        default: '0.1.0'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar configuración obligatoria
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          MTIGO_KEYSTORE_BASE64: ${{ secrets.MTIGO_KEYSTORE_BASE64 }}
+        run: |
+          missing=0
+          for v in VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY MTIGO_KEYSTORE_BASE64; do
+            if [ -z "${!v}" ]; then echo "::error::Falta el secreto $v (Settings > Secrets and variables > Actions)"; missing=1; fi
+          done
+          exit $missing
+
+      - name: Typecheck, pruebas unitarias y build web
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_PUBLIC_WEB_URL: ${{ vars.VITE_PUBLIC_WEB_URL }}
+          VITE_SUPPORT_EMAIL: ${{ vars.VITE_SUPPORT_EMAIL }}
+        run: |
+          npm run typecheck
+          npm run test:unit
+          npm run build
+
+      - name: Sincronizar Capacitor
+        run: npx cap sync android
+
+      - name: Preparar firma
+        env:
+          MTIGO_KEYSTORE_BASE64: ${{ secrets.MTIGO_KEYSTORE_BASE64 }}
+        run: echo "$MTIGO_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/mtigo-upload.jks"
+
+      - name: Compilar AAB y APK firmados
+        working-directory: android
+        env:
+          MTIGO_KEYSTORE_PATH: ${{ runner.temp }}/mtigo-upload.jks
+          MTIGO_KEYSTORE_PASSWORD: ${{ secrets.MTIGO_KEYSTORE_PASSWORD }}
+          MTIGO_KEY_ALIAS: ${{ secrets.MTIGO_KEY_ALIAS }}
+          MTIGO_KEY_PASSWORD: ${{ secrets.MTIGO_KEY_PASSWORD }}
+          MTIGO_VERSION_CODE: ${{ inputs.version_code }}
+          MTIGO_VERSION_NAME: ${{ inputs.version_name }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon bundleRelease assembleRelease
+
+      - name: Verificar firma
+        run: |
+          "$ANDROID_HOME"/build-tools/*/apksigner verify --print-certs android/app/build/outputs/apk/release/app-release.apk | head -5
+          jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab | tail -1
+
+      - name: Renombrar artefactos
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/bundle/release/app-release.aab "out/MtiGo-${{ inputs.version_name }}-${{ inputs.version_code }}.aab"
+          cp android/app/build/outputs/apk/release/app-release.apk "out/MtiGo-${{ inputs.version_name }}-${{ inputs.version_code }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MtiGo-android-${{ inputs.version_name }}-${{ inputs.version_code }}
+          path: out/
+          retention-days: 30
+
+      - name: Limpiar llave
+        if: always()
+        run: rm -f "$RUNNER_TEMP/mtigo-upload.jks"
