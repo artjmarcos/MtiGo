@@ -693,6 +693,22 @@ begin
   return f;
 end $$;
 
+-- Quitar una foto del borrador (antes de entregar). La app borra también el
+-- objeto en Storage.
+create or replace function public.remove_evidence_file(p_file_id uuid)
+returns text
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare uid uuid := public._require_user(); f public.evidence_files; s public.evidence_submissions;
+begin
+  select * into f from public.evidence_files where id = p_file_id;
+  if not found then perform public._err('NOT_FOUND'); end if;
+  select * into s from public.evidence_submissions where id = f.submission_id for update;
+  if s.collaborator_id <> uid then perform public._err('NOT_ALLOWED'); end if;
+  if s.status <> 'borrador' then perform public._err('INVALID_STATE'); end if;
+  delete from public.evidence_files where id = f.id;
+  return f.storage_path;
+end $$;
+
 create or replace function public.submit_evidence(p_submission_id uuid, p_body_text text)
 returns public.evidence_submissions
 language plpgsql security definer set search_path = public, pg_temp as $$
@@ -1074,6 +1090,7 @@ grant execute on function
   public.release_request(uuid),
   public.start_submission(uuid),
   public.add_evidence_file(uuid, text, text, integer),
+  public.remove_evidence_file(uuid),
   public.submit_evidence(uuid, text),
   public.review_evidence(uuid, boolean, text),
   public.send_message(uuid, text),

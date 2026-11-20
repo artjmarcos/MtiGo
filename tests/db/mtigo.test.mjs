@@ -354,6 +354,25 @@ describe('Entrega y revisión de evidencia', () => {
     }
   });
 
+  test('quitar una foto del borrador; no se puede después de entregar', async () => {
+    const r = await newRequest(sa, { p_evidence_type: 'foto' });
+    await sb.rpc('accept_request', { p_request_id: r.id });
+    const [sub] = await sb.rpc('start_submission', { p_request_id: r.id });
+    const p1 = `${r.id}/${sub.id}/${randomUUID()}.jpg`;
+    const p2 = `${r.id}/${sub.id}/${randomUUID()}.jpg`;
+    await uploadAs(sb, p1); await uploadAs(sb, p2);
+    const [f1] = await sb.rpc('add_evidence_file', { p_submission_id: sub.id, p_storage_path: p1, p_mime_type: 'image/jpeg', p_size_bytes: 10 });
+    const [f2] = await sb.rpc('add_evidence_file', { p_submission_id: sub.id, p_storage_path: p2, p_mime_type: 'image/jpeg', p_size_bytes: 10 });
+    await expectError(sc.rpc('remove_evidence_file', { p_file_id: f1.id }), 'MTIGO_NOT_ALLOWED');
+    const [removed] = await sb.rpc('remove_evidence_file', { p_file_id: f1.id });
+    assert.equal(removed.remove_evidence_file, p1);
+    await sb.query(`delete from storage.objects where bucket_id = 'evidence' and name = $1`, [p1]);
+    await sb.rpc('submit_evidence', { p_submission_id: sub.id, p_body_text: null });
+    await expectError(sb.rpc('remove_evidence_file', { p_file_id: f2.id }), 'MTIGO_INVALID_STATE');
+    const files = await sa.query(`select storage_path from public.evidence_files where submission_id = $1`, [sub.id]);
+    assert.deepEqual(files.map((f) => f.storage_path), [p2]);
+  });
+
   test('liberar una solicitud la vuelve a dejar disponible', async () => {
     const r = await newRequest();
     await sb.rpc('accept_request', { p_request_id: r.id });
@@ -420,7 +439,7 @@ describe('Eliminación de cuenta', () => {
     const X = await db.createUser('Xime');
     const sx = await db.session(X);
     const own = await newRequest(sx);
-    const other = await newRequest();
+    const other = await newRequest(await db.session(await db.createUser('Olga')));
     await sx.rpc('accept_request', { p_request_id: other.id });
     await sx.rpc('delete_my_account');
     const admin = await db.admin();

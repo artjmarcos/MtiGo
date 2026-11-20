@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2732 2732">
+  <rect width="2732" height="2732" fill="#4CAF50"/>
+  <g transform="translate(1366 1180) scale(0.9) translate(-512 -500)">
+    <path d="M512 170c-140 0-250 108-250 246 0 178 250 418 250 418s250-240 250-418c0-138-110-246-250-246z" fill="#fff"/>
+    <path d="M512 170c-140 0-250 108-250 246 0 178 250 418 250 418s250-240 250-418c0-138-110-246-250-246z" fill="none" stroke="#FF9800" stroke-width="22"/>
+    <rect x="478" y="290" width="68" height="200" rx="34" fill="#FF9800"/>
+    <circle cx="512" cy="560" r="40" fill="#FF9800"/>
+  </g>
+  <text x="1366" y="1720" text-anchor="middle" font-family="DejaVu Sans, Arial, sans-serif" font-weight="bold" font-size="230" fill="#fff">MtiGo<tspan fill="#FF9800">!</tspan></text>
+</svg>

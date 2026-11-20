@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#4CAF50" />
+    <meta name="description" content="MtiGo! — información real de un lugar antes de ir. Piloto en Villarrica, Chile." />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: %VITE_SUPABASE_URL% https://tile.openstreetmap.org; connect-src 'self' %VITE_SUPABASE_URL%; font-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'"
+    />
+    <link rel="icon" type="image/png" href="./icon-192.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <title>MtiGo!</title>
+  </head>
+  <body>
+    <div id="app">
+      <div class="boot"><div class="logo"><span class="logo-pin">📍</span><span class="logo-text">MtiGo<b>!</b></span></div></div>
+    </div>
+    <noscript>MtiGo! necesita JavaScript.</noscript>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

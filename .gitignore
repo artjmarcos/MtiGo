@@ -7,3 +7,4 @@ dist/
 keystore.properties
 android/app/release/
 /tmp/
+dist-e2e/
