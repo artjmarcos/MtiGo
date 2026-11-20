@@ -57,7 +57,7 @@ try {
   async function phone(label) {
     const ctx = await browser.createBrowserContext();
     const page = await ctx.newPage();
-    await page.setViewport({ width: 360, height: 740, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+    await page.setViewport({ width: 360, height: 720, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
     page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(`[${label}] ${m.text()}`); });
     page.on('pageerror', (e) => consoleErrors.push(`[${label}] ${e.message}`));
     page.on('dialog', (d) => { consoleErrors.push(`[${label}] diálogo nativo inesperado: ${d.message()}`); void d.dismiss(); });
@@ -210,7 +210,7 @@ try {
   // ---- 9. Persistencia al cerrar y abrir la app ----
   const pageA2 = await A.ctx.newPage();
   await A.page.close();
-  await pageA2.setViewport({ width: 360, height: 740, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  await pageA2.setViewport({ width: 360, height: 720, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
   await pageA2.goto(`${APP}#/actividad`, { waitUntil: 'networkidle0' });
   await pageA2.waitForFunction(() => document.body.innerText.includes('¿Hay fila en BancoEstado?') && document.body.innerText.includes('Aprobada'), { timeout: 15000 });
   A.page = pageA2;
