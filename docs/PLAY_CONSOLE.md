@@ -57,14 +57,14 @@ Los pagos aún no están habilitados: la recompensa que indicas es solo referenc
 - Gráfico destacado 1024×500: `store/play-feature-1024x500.png`
 - Capturas de teléfono 1080×2160: `screenshots/*.png` (sacadas de la app real durante la prueba extremo a extremo; sube de 4 a 8).
 
-**Contacto:** correo de soporte (obligatorio) y URL del sitio: `https://artjmarcos.github.io/mtigo/`.
+**Contacto:** correo de soporte (obligatorio) y URL del sitio: `https://artjmarcos.github.io/MtiGo/`.
 
 ## Política de privacidad
-URL: `https://artjmarcos.github.io/mtigo/legal/privacidad.html` (publicada por el workflow "Web y documentos legales"). Completa antes el correo de contacto en el archivo.
+URL: `https://artjmarcos.github.io/MtiGo/legal/privacidad.html` (publicada por el workflow "Web y documentos legales"). Completa antes el correo de contacto en el archivo.
 
 ## Eliminación de cuenta (obligatorio)
 - Dentro de la app: Perfil → Eliminar mi cuenta.
-- URL web para el formulario de Play: `https://artjmarcos.github.io/mtigo/legal/eliminar-cuenta.html`
+- URL web para el formulario de Play: `https://artjmarcos.github.io/MtiGo/legal/eliminar-cuenta.html`
 
 ## Formulario "Seguridad de los datos" (Data Safety)
 

@@ -57,7 +57,7 @@ La prueba E2E usa los **binarios oficiales de Supabase Auth (v2.186.0) y PostgRE
 2. Configurar SMTP propio en Supabase para correos de confirmación y recuperación (el correo incluido envía muy pocos por hora).
 3. Subir el código al repositorio y cargar los secretos de GitHub (§2–3).
 4. Ejecutar los workflows: web/legales y Android → descargar AAB y APK.
-5. Reemplazar **[CORREO DE CONTACTO — COMPLETAR ANTES DE PUBLICAR]** en `public/legal/*.html`. Revisión legal de los textos (no soy abogado; son una base razonable para un piloto, alineados con la Ley 19.628).
+5. Revisión legal de los textos (no soy abogado; son una base razonable para un piloto, alineados con la Ley 19.628).
 6. Play Console: crear la app, ficha, Data Safety, clasificación, cuenta de revisor, prueba cerrada con ≥12 testers durante 14 días (docs/PLAY_CONSOLE.md).
 7. Probar en al menos 2 teléfonos reales (gama baja incluida) el caso completo.
 8. Pausar o eliminar los dos proyectos Supabase antiguos.

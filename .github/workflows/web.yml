@@ -1,6 +1,6 @@
 # Publica la versión web y los documentos legales en GitHub Pages:
-#   https://artjmarcos.github.io/mtigo/                       (app web: recuperación de contraseña, eliminar cuenta)
-#   https://artjmarcos.github.io/mtigo/legal/privacidad.html  (URL de política de privacidad para Google Play)
+#   https://artjmarcos.github.io/MtiGo/                       (app web: recuperación de contraseña, eliminar cuenta)
+#   https://artjmarcos.github.io/MtiGo/legal/privacidad.html  (URL de política de privacidad para Google Play)
 # Requiere: Settings > Pages > Source = "GitHub Actions".
 name: Web y documentos legales (GitHub Pages)
 
