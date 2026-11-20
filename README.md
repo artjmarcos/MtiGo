@@ -1,35 +1,48 @@
-# MtiGo — Info en tiempo real
+# MtiGo! — información real del lugar, antes de ir
 
-## Descripción
-Desarrolla una aplicación móvil llamada MtiGo, diseñada como una plataforma de solicitudes geolocalizadas en tiempo real. Conecta a personas que necesitan información inmediata de un lugar con usuarios que están físicamente allí, mediante micropagos. La aplicación es simple, rápida, escalable y de bajo costo operativo.
+Marketplace de información hiperlocal en tiempo real. Piloto: **Villarrica, Región de La Araucanía, Chile**.
 
-## Flujo principal
-- El usuario abre la app y ve un mapa limpio (estética tipo videojuego, tonos verdes claros).
-- Crea una solicitud indicando ubicación, pregunta, tipo de respuesta (Foto, Audio, Texto o Emoji), monto a pagar y TTL (2–15 minutos).
-- Usuarios cercanos reciben la notificación y pueden responder.
-- Al aceptar una respuesta, el pago se libera automáticamente y ambos se califican.
+- **Solicitante:** publica qué necesita saber (¿hay fila en el banco?, ¿está abierta la tienda?) y ofrece una recompensa referencial en CLP.
+- **Colaborador:** acepta una solicitud cercana, va al lugar y entrega evidencia con fotos y/o texto.
+- La misma cuenta puede cumplir ambos roles.
 
-## Arquitectura y tecnologías
-- Frontend: Flutter (iOS/Android).
-- Backend: Firebase (Authentication, Firestore, Cloud Functions, Cloud Storage, Cloud Messaging, Analytics).
-- Billetera digital integrada: saldo interno, historial, carga, retiros y comisiones configurables. PSP (Webpay, Mercado Pago, Stripe, etc.) integrable sin cambiar la lógica de negocio.
+> **Pagos deshabilitados.** La recompensa es solo informativa. No hay billetera, saldo, cobros ni transferencias (ni reales ni simulados).
 
-## Modelo de datos (colecciones)
-- Usuarios, Solicitudes, Respuestas, Wallet, Transacciones, Calificaciones, Notificaciones, Configuración.
+## Tecnología
 
-## Características clave
-- Geolocalización y búsqueda por distancia.
-- Notificaciones push y sistema de reputación.
-- Prevención de fraude, moderación y registro de auditoría.
-- Escalabilidad: arquitectura modular y desacoplada, preparada para millones de usuarios.
-- Accesibilidad: interfaz minimalista, botones grandes, navegación sencilla y compatibilidad con lectores de pantalla (pensada para adultos mayores y personas con discapacidad visual).
+| Parte | Elección | Motivo |
+|---|---|---|
+| App | TypeScript + Vite (web), empaquetada con **Capacitor 8** para Android | Continúa el prototipo HTML/Supabase existente; un solo código para Android y web |
+| Backend | **Supabase** (PostgreSQL, Auth, Storage) | Ya usado por el prototipo; plan gratuito suficiente para el piloto |
+| Seguridad | Row Level Security + funciones de servidor (RPC) | Toda escritura se valida en el servidor |
+| Mapas | Leaflet + OpenStreetMap | Sin clave ni facturación |
 
-## Panel administrativo
-- Panel web para gestionar usuarios, solicitudes, pagos, reportes, métricas y moderación.
+Android: `io.artjmarcos.mtigo`, minSdk 24 (Android 7), targetSdk 36.
 
-## MVP prioritario
-- Registro, mapa, creación de solicitudes, respuesta con foto, billetera digital, reputación, notificaciones y panel administrativo.
-- Inicio en una ciudad (Villarrica, Chile) con preparación para escalar nacional e internacionalmente sin rediseñar la arquitectura.
+## Estructura
 
-## Objetivo
-Convertir MtiGo en la plataforma líder de información geolocalizada colaborativa, donde las personas obtienen información confiable en tiempo real y los colaboradores son recompensados.
+```
+src/                      App (pantallas en src/screens, lógica en src/lib)
+supabase/migrations/      Esquema de base de datos (ejecutar en Supabase)
+public/legal/             Política de privacidad, términos, eliminación de cuenta
+android/                  Proyecto Android (Capacitor)
+tests/unit/               Pruebas unitarias (Vitest)
+tests/db/                 Pruebas de integración con PostgreSQL real
+tests/e2e/                Prueba extremo a extremo con dos teléfonos (Chrome)
+.github/workflows/        Compilación AAB/APK, publicación web y pruebas
+docs/                     Instalación, Google Play, cambios e informe
+legacy/                   Prototipos anteriores (conservados)
+```
+
+## Comandos
+
+```bash
+npm ci
+npm run typecheck     # verificación de tipos
+npm run test:unit     # pruebas unitarias
+npm run test:db       # integración con PostgreSQL real (descarga PostgreSQL embebido)
+npm run build         # build de producción (requiere .env)
+npm run android:sync  # build + copia al proyecto Android
+```
+
+Guías: [docs/INSTALACION.md](docs/INSTALACION.md) · [docs/PLAY_CONSOLE.md](docs/PLAY_CONSOLE.md) · [docs/INFORME.md](docs/INFORME.md) · [docs/CAMBIOS.md](docs/CAMBIOS.md)

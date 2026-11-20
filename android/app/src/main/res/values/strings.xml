@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MtiGo!</string>
+    <string name="title_activity_main">MtiGo!</string>
+    <string name="package_name">io.artjmarcos.mtigo</string>
+    <string name="custom_url_scheme">io.artjmarcos.mtigo</string>
+</resources>
