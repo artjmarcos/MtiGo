@@ -39,6 +39,9 @@ jobs:
           echo "ANDROID_HOME=$ANDROID_HOME"
           ls "$ANDROID_HOME/platforms" "$ANDROID_HOME/build-tools" | tail -20
 
+      # Caché de Gradle entre ejecuciones (más rápido y menos descargas).
+      - uses: gradle/actions/setup-gradle@v5
+
       - name: Instalar dependencias
         run: npm ci
 
@@ -96,7 +99,9 @@ jobs:
           MTIGO_VERSION_NAME: ${{ inputs.version_name }}
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon bundleRelease assembleRelease
+          # Reintenta una vez si falla una descarga puntual de dependencias.
+          ./gradlew --no-daemon bundleRelease assembleRelease \
+            || { echo "Reintentando compilación…"; sleep 20; ./gradlew --no-daemon --refresh-dependencies bundleRelease assembleRelease; }
 
       - name: Verificar firma
         run: |
