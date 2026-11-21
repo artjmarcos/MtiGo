@@ -1,3 +1,5 @@
+import '@fontsource/poppins/latin-700.css';
+import '@fontsource/poppins/latin-800.css';
 import './styles.css';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
@@ -11,7 +13,8 @@ import { go, parseRoute, type Route } from './lib/router';
 import { html, mount } from './lib/dom';
 import { toast } from './lib/ui';
 import * as api from './lib/api';
-import { renderWelcome, renderLogin, renderSignup, renderRecover, renderNewPassword } from './screens/auth';
+import { renderWelcome, renderLogin, renderSignup, renderRecover, renderNewPassword, renderTerms } from './screens/auth';
+import { handleCallbackUrl } from './lib/oauth';
 import { renderExplore } from './screens/explore';
 import { renderCreate } from './screens/create';
 import { renderRequest } from './screens/request';
@@ -27,7 +30,7 @@ const PUBLIC: Record<string, Renderer> = {
 };
 const PRIVATE: Record<string, Renderer> = {
   explore: renderExplore, create: renderCreate, request: renderRequest, activity: renderActivity,
-  notifications: renderNotifications, profile: renderProfile, newPassword: renderNewPassword,
+  notifications: renderNotifications, profile: renderProfile, newPassword: renderNewPassword, terms: renderTerms,
 };
 const TABS: [string, string, string, string][] = [
   ['explore', '#/explorar', '🧭', t('navExplore')],
@@ -70,7 +73,6 @@ async function loadProfile(): Promise<void> {
   try {
     const { profile, phone } = await api.getMyProfile(state.session.user.id);
     state.profile = profile; state.phone = phone;
-    if (!profile.accepted_terms_at) await api.acceptTerms().then((p) => { state.profile = p; }).catch(() => undefined);
   } catch { /* se reintenta al abrir perfil */ }
 }
 
@@ -91,6 +93,9 @@ function render(): void {
   if (route.name === 'notFound') { go(logged ? '/explorar' : '/bienvenida', true); return; }
   if (PRIVATE[route.name] && !logged) { go('/bienvenida', true); return; }
   if (PUBLIC[route.name] && logged) { go('/explorar', true); return; }
+  // Cuentas creadas con Google/Facebook: aceptación explícita de términos.
+  if (logged && state.profile && !state.profile.accepted_terms_at && route.name !== 'terms' && route.name !== 'legal') { go('/terminos', true); return; }
+  if (route.name === 'terms' && state.profile?.accepted_terms_at) { go('/explorar', true); return; }
 
   if (typeof cleanup === 'function') cleanup();
   cleanup = undefined;
@@ -164,6 +169,10 @@ async function start(): Promise<void> {
       else history.back();
     });
     App.addListener('resume', () => { void refreshBadges(); });
+    // Vuelta desde Google/Facebook (io.artjmarcos.mtigo://login-callback).
+    App.addListener('appUrlOpen', ({ url }) => {
+      void handleCallbackUrl(url).then((err) => { if (err) toast(`No se pudo ingresar: ${err}`, 'error'); });
+    });
   }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') void refreshBadges(); });
   window.setInterval(() => { if (document.visibilityState === 'visible') void refreshBadges(); }, 60000);

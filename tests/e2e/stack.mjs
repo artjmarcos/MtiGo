@@ -8,7 +8,7 @@ import pg from 'pg';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
-import { readFileSync, rmSync, mkdirSync, writeFileSync, existsSync, readFileSync as rf } from 'node:fs';
+import { readFileSync, readdirSync, rmSync, mkdirSync, writeFileSync, existsSync, readFileSync as rf } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -109,7 +109,9 @@ export async function startStack() {
     create function storage.foldername(name text) returns text[] language sql immutable as
       $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
   `);
-  await admin.query(readFileSync(path.join(root, 'supabase/migrations/20261120000001_mtigo_mvp.sql'), 'utf8'));
+  for (const f of readdirSync(path.join(root, 'supabase/migrations')).filter((x) => x.endsWith('.sql') && !x.includes('vencimiento_automatico')).sort()) {
+    await admin.query(readFileSync(path.join(root, 'supabase/migrations', f), 'utf8'));
+  }
   await admin.query(`notify pgrst, 'reload schema'`);
 
   // PostgREST.

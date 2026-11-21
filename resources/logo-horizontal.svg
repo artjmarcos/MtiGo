@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 520"><g transform="translate(260 270) scale(.48) translate(-512 -560)"><g fill="none" stroke="#43A047" stroke-linecap="round">
+    <path d="M318 318 A274 274 0 0 1 706 318" stroke-width="34" opacity=".6"/>
+    <path d="M238 238 A388 388 0 0 1 786 238" stroke-width="34" opacity=".32"/>
+  </g>
+  <ellipse cx="512" cy="872" rx="150" ry="30" fill="#004D40" opacity=".2"/>
+  <path d="M512 300c-128 0-226 98-226 222 0 160 226 344 226 344s226-184 226-344c0-124-98-222-226-222z" fill="#43A047"/>
+  <circle cx="512" cy="520" r="120" fill="#FF9800"/>
+  <circle cx="512" cy="520" r="120" fill="none" stroke="#F57C00" stroke-width="10"/>
+  <rect x="490" y="440" width="44" height="104" rx="22" fill="#FFFFFF"/>
+  <circle cx="512" cy="586" r="24" fill="#FFFFFF"/></g><text x="520" y="330" font-family="Poppins, Montserrat, DejaVu Sans, Arial, sans-serif" font-weight="800" font-size="230" fill="#2E7D32" letter-spacing="-4">Mti<tspan fill="#00897B">Go</tspan><tspan fill="#FF9800">!</tspan></text></svg>

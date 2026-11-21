@@ -1,9 +1,8 @@
 // Pruebas de integración contra PostgreSQL real con la migración de producción.
 import { test, before, after, beforeEach, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import { TestDb, expectError, requestInput, inMinutes } from './harness.mjs';
+import { TestDb, expectError, requestInput, inMinutes, MIGRATION } from './harness.mjs';
 
 const db = new TestDb();
 let A, B, C; // ids de usuarios
@@ -43,8 +42,7 @@ async function newRequest(session = sa, overrides = {}) {
 describe('Migración', () => {
   test('se puede volver a ejecutar sin errores (idempotente)', async () => {
     const admin = await db.admin();
-    const sql = readFileSync(new URL('../../supabase/migrations/20261120000001_mtigo_mvp.sql', import.meta.url), 'utf8');
-    await admin.query(sql);
+    await admin.query(MIGRATION); // todas las migraciones, en orden
     const { rows } = await admin.query(`select count(*)::int n from public.categories`);
     assert.equal(rows[0].n, 8);
   });
@@ -57,6 +55,20 @@ describe('Autenticación y perfiles', () => {
     assert.ok(rows[0].accepted_terms_at);
     const priv = await sa.query(`select user_id from public.profile_private`);
     assert.deepEqual(priv.map((r) => r.user_id), [A]);
+  });
+
+  test('cuenta de Google/Facebook: nombre del proveedor y términos pendientes', async () => {
+    const admin = await db.admin();
+    const { rows } = await admin.query(
+      `insert into auth.users (email, raw_user_meta_data) values ($1, $2) returning id`,
+      [`g-${Date.now()}@gmail.com`, { full_name: 'Gabriela Soto', avatar_url: 'https://x/y.png' }]);
+    const sg = await db.session(rows[0].id);
+    const [p] = await sg.query(`select display_name, accepted_terms_at from public.profiles where id = auth.uid()`);
+    assert.equal(p.display_name, 'Gabriela Soto');
+    assert.equal(p.accepted_terms_at, null);
+    await expectError(sg.rpc('create_request', requestInput()), 'MTIGO_TERMS_REQUIRED');
+    await sg.rpc('accept_terms');
+    await sg.rpc('create_request', requestInput());
   });
 
   test('anónimo no puede crear solicitudes ni leer datos', async () => {

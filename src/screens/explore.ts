@@ -9,6 +9,7 @@ import { config } from '../config';
 import { state, cityName, categoryOf } from '../state';
 import { requestCard } from './components';
 import { escapeHtml } from '../lib/dom';
+import { createMap, pinIcon } from '../lib/map';
 
 // Los filtros se conservan mientras la app esté abierta.
 const filters = {
@@ -129,34 +130,23 @@ export function renderExplore(root: HTMLElement): () => void {
   return () => { window.clearInterval(timer); window.clearTimeout(searchTimer); mapCleanup?.(); };
 }
 
-/** Mapa real de OpenStreetMap con atribución obligatoria (sin costo, sin clave). */
+/** Mapa real (satélite o calles) con las solicitudes que tienen coordenadas. */
 async function drawMap(el: HTMLElement, items: ListedRequest[]): Promise<() => void> {
-  const L = (await import('leaflet')).default;
-  await import('leaflet/dist/leaflet.css');
   const center = state.lastCoords ?? config.defaultCenter;
-  const map = L.map(el, { zoomControl: true, fadeAnimation: false, zoomAnimation: false, markerZoomAnimation: false }).setView([center.lat, center.lng], 14);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  }).addTo(map);
+  const m = await createMap(el, center, 14);
+  const { L, map } = m;
   if (state.lastCoords) {
-    L.circleMarker([state.lastCoords.lat, state.lastCoords.lng], { radius: 8, color: '#009688', fillOpacity: 0.9 }).addTo(map).bindTooltip('Tú');
+    L.circleMarker([state.lastCoords.lat, state.lastCoords.lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#009688', fillOpacity: 1 }).addTo(map).bindTooltip('Tú');
   }
   const bounds: [number, number][] = [];
   for (const r of items) {
     const cat = categoryOf(r.category_slug);
-    const icon = L.divIcon({
-      className: 'pin',
-      html: `<div class="pin-inner">${cat.icon} ${escapeHtml(formatClp(r.reward_clp))}</div>`,
-      iconSize: [84, 30], iconAnchor: [42, 15],
-    });
     const lat = Number(r.lat); const lng = Number(r.lng);
     bounds.push([lat, lng]);
-    L.marker([lat, lng], { icon, title: r.title }).addTo(map)
+    L.marker([lat, lng], { icon: pinIcon(L, `${cat.icon} ${escapeHtml(formatClp(r.reward_clp))}`), title: r.title }).addTo(map)
       .on('click', () => { location.hash = `#/solicitud/${r.id}`; });
   }
-  if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 16, animate: false });
-  else if (bounds.length === 1) map.setView(bounds[0], 16, { animate: false });
-  const t = window.setTimeout(() => map.invalidateSize({ animate: false }), 50);
-  return () => { window.clearTimeout(t); map.stop(); map.off(); map.remove(); };
+  if (bounds.length > 1) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17, animate: false });
+  else if (bounds.length === 1) map.setView(bounds[0], 17, { animate: false });
+  return m.destroy;
 }
