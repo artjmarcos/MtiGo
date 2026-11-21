@@ -4,6 +4,8 @@ buildscript {
     
     repositories {
         google()
+        // Espejo de Maven Central (Google Cloud): evita fallos o límites de descarga de Maven Central en CI.
+        maven { url 'https://maven-central.storage-download.googleapis.com/maven2/' }
         mavenCentral()
     }
     dependencies {
@@ -20,6 +22,8 @@ apply from: "variables.gradle"
 allprojects {
     repositories {
         google()
+        // Espejo de Maven Central (Google Cloud): evita fallos o límites de descarga de Maven Central en CI.
+        maven { url 'https://maven-central.storage-download.googleapis.com/maven2/' }
         mavenCentral()
     }
 }
