@@ -7,6 +7,7 @@ const PATTERNS: [string, RegExp, string[]][] = [
   ['signup', /^\/registro$/, []],
   ['recover', /^\/recuperar$/, []],
   ['newPassword', /^\/nueva-clave$/, []],
+  ['terms', /^\/terminos$/, []],
   ['explore', /^\/(explorar)?$/, []],
   ['create', /^\/pedir$/, []],
   ['request', /^\/solicitud\/([0-9a-f-]{36})$/, ['id']],

@@ -29,7 +29,7 @@ try {
   // 1) Compilación de producción apuntando al entorno local.
   execFileSync('npx', ['vite', 'build', '--outDir', 'dist-e2e', '--emptyOutDir'], {
     cwd: root, stdio: 'pipe',
-    env: { ...process.env, VITE_SUPABASE_URL: stack.url, VITE_SUPABASE_ANON_KEY: stack.anonKey, VITE_PUBLIC_WEB_URL: `http://127.0.0.1:${APP_PORT}/`, VITE_SUPPORT_EMAIL: 'soporte@ejemplo.cl' },
+    env: { ...process.env, VITE_SUPABASE_URL: stack.url, VITE_SUPABASE_ANON_KEY: stack.anonKey, VITE_PUBLIC_WEB_URL: `http://127.0.0.1:${APP_PORT}/`, VITE_SUPPORT_EMAIL: 'soporte@ejemplo.cl', VITE_AUTH_PROVIDERS: 'google' },
   });
   const dist = path.join(root, 'dist-e2e');
   const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
@@ -115,6 +115,20 @@ try {
   await A.page.goto(APP, { waitUntil: 'networkidle0' });
   await waitText(A, 'Información real del lugar');
   await shot(A, '01-bienvenida');
+  await A.page.goto(`${APP}#/ingresar`, { waitUntil: 'networkidle0' });
+  await A.page.waitForSelector('#email');
+  await shot(A, '01b-ingresar');
+  await A.page.goto(APP, { waitUntil: 'networkidle0' });
+  await waitText(A, 'Información real del lugar');
+  // Botón de Google: inicia el flujo OAuth real de Supabase Auth.
+  check('Botón "Continuar con Google" visible (proveedor configurado)', (await text(A)).includes('Continuar con Google'));
+  const [authReq] = await Promise.all([
+    A.page.waitForRequest((r) => r.url().includes('/auth/v1/authorize') && r.url().includes('provider=google'), { timeout: 10000 }),
+    A.page.click('[data-action="oauth"][data-provider="google"]'),
+  ]);
+  check('Google redirige al endpoint OAuth de Supabase', /redirect_to=/.test(authReq.url()), authReq.url().split('?')[0]);
+  await A.page.goto(APP, { waitUntil: 'networkidle0' });
+
   await signup(A, 'Ana', `ana-${Date.now()}@test.cl`);
   await waitText(A, 'No hay solicitudes disponibles');
   check('Registro de A y explorar sin datos ficticios', (await text(A)).includes('No hay solicitudes disponibles'));
@@ -215,6 +229,25 @@ try {
   await pageA2.waitForFunction(() => document.body.innerText.includes('¿Hay fila en BancoEstado?') && document.body.innerText.includes('Aprobada'), { timeout: 15000 });
   A.page = pageA2;
   check('9. Sesión y datos persisten al cerrar y volver a abrir', true);
+
+  // ---- Cuenta social (Google): aceptación explícita de términos ----
+  const gEmail = `gabi-${Date.now()}@gmail.com`;
+  await fetch(`${stack.url}/auth/v1/signup`, { method: 'POST', headers: { apikey: stack.anonKey, 'content-type': 'application/json' },
+    body: JSON.stringify({ email: gEmail, password: 'clave-segura-1', data: { full_name: 'Gabriela Soto' } }) });
+  const G = await phone('G');
+  await G.page.goto(`${APP}#/ingresar`, { waitUntil: 'networkidle0' });
+  await G.page.type('#email', gEmail); await G.page.type('#pw', 'clave-segura-1');
+  await G.page.click('form button[type="submit"]');
+  await waitText(G, 'Antes de comenzar');
+  check('Cuenta sin términos aceptados ve la pantalla de aceptación', (await text(G)).includes('¡Hola, Gabriela Soto!'));
+  await shot(G, '13-aceptar-terminos');
+  await G.page.click('[data-action="accept"]');
+  await waitText(G, 'Debes aceptar');
+  await G.page.click('#terms');
+  await G.page.click('[data-action="accept"]');
+  await G.page.waitForFunction(() => location.hash === '#/explorar', { timeout: 10000 });
+  check('Tras aceptar términos entra a Explorar', true);
+  await G.ctx.close();
 
   // ---- Usuario no autorizado ----
   await signup(C, 'Carla', `carla-${Date.now()}@test.cl`);

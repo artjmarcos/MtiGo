@@ -9,11 +9,11 @@ on:
       version_code:
         description: 'versionCode (entero, debe subir en cada envío a Google Play)'
         required: true
-        default: '1'
+        default: '2'
       version_name:
         description: 'versionName visible (ej: 0.1.0)'
         required: true
-        default: '0.1.0'
+        default: '0.2.0'
 
 jobs:
   build:

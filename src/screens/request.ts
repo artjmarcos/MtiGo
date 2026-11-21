@@ -5,6 +5,7 @@ import * as api from '../lib/api';
 import { friendlyError } from '../lib/errors';
 import { compressImage } from '../lib/image';
 import { mapsLink } from '../lib/geo';
+import { createMap, pinIcon, type MtigoMap } from '../lib/map';
 import { EVIDENCE_LABEL, STATUS_LABEL, effectiveStatus, formatClp, formatDateTime, relativeTime, timeRemaining } from '../lib/format';
 import { LIMITS, evidencePath, validateEvidence } from '../lib/validation';
 import { categoryOf, cityName, userId } from '../state';
@@ -26,8 +27,22 @@ export function renderRequest(root: HTMLElement, params: Record<string, string>)
   let draftText = '';
   let msgTimer: number | undefined;
 
-  mount(root, html`${screenHeader(t('detailTitle'), '#/explorar')}<div class="content" id="body">${spinner()}</div>`);
+  mount(root, html`${screenHeader(t('detailTitle'), '#/explorar')}<div id="req-map" class="map map-hero" hidden></div><div class="content" id="body">${spinner()}</div>`);
   const body = $('#body', root);
+  let reqMap: MtigoMap | null = null;
+
+  // Mapa del lugar (una sola vez; no se recrea en cada actualización).
+  async function showPlace(r: api.RequestRow): Promise<void> {
+    if (reqMap || r.lat === null || r.lng === null || disposed) return;
+    const el = $('#req-map', root);
+    el.hidden = false;
+    const lat = Number(r.lat); const lng = Number(r.lng);
+    reqMap = await createMap(el, { lat, lng }, 17);
+    if (disposed) { reqMap.destroy(); return; }
+    const { L, map } = reqMap;
+    if (r.radius_m) L.circle([lat, lng], { radius: r.radius_m, color: '#FF9800', weight: 2, fillOpacity: 0.08 }).addTo(map);
+    L.marker([lat, lng], { icon: pinIcon(L), title: r.address }).addTo(map);
+  }
 
   async function load(): Promise<void> {
     try {
@@ -88,6 +103,7 @@ export function renderRequest(root: HTMLElement, params: Record<string, string>)
           ${!isRequester || otherUserId ? html`<button class="btn btn-ghost btn-sm" data-action="report">🚩 ${t('report')}</button>` : ''}
           ${otherUserId && otherUserId !== me ? html`<button class="btn btn-ghost btn-sm" data-action="block" data-user="${otherUserId}">🚫 ${t('block')}</button>` : ''}
         </div>`);
+      void showPlace(r);
       const ta = $opt('#ev-text', body) as HTMLTextAreaElement | null;
       if (ta) { ta.value = draftText; ta.addEventListener('input', () => { draftText = ta.value; }); }
     } catch (e) {
@@ -340,5 +356,5 @@ export function renderRequest(root: HTMLElement, params: Record<string, string>)
     const typing = document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement;
     if (document.visibilityState === 'visible' && !typing && !document.querySelector('.modal') && !photos.some((p) => p.status === 'uploading')) void load();
   }, 30000);
-  return () => { disposed = true; window.clearInterval(msgTimer); window.clearInterval(stateTimer); photos.forEach((p) => p.url.startsWith('blob:') && URL.revokeObjectURL(p.url)); };
+  return () => { disposed = true; reqMap?.destroy(); window.clearInterval(msgTimer); window.clearInterval(stateTimer); photos.forEach((p) => p.url.startsWith('blob:') && URL.revokeObjectURL(p.url)); };
 }

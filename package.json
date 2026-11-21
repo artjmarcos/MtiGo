@@ -1,7 +1,7 @@
 {
   "name": "mtigo",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -30,10 +30,12 @@
   "dependencies": {
     "@capacitor/android": "^8.6.2",
     "@capacitor/app": "^8.1.2",
+    "@capacitor/browser": "^8.0.5",
     "@capacitor/core": "^8.6.2",
     "@capacitor/preferences": "^8.0.1",
     "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/status-bar": "^8.0.4",
+    "@fontsource/poppins": "^5.3.0",
     "@supabase/supabase-js": "^2.119.2",
     "leaflet": "^1.9.4"
   }

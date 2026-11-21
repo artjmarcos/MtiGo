@@ -7,6 +7,8 @@ export const config = {
   /** URL pública de la versión web (GitHub Pages): recuperación de contraseña y enlaces legales. */
   publicWebUrl: (import.meta.env.VITE_PUBLIC_WEB_URL ?? '').trim(),
   supportEmail: (import.meta.env.VITE_SUPPORT_EMAIL ?? '').trim(),
+  /** Proveedores de ingreso social ya configurados en Supabase, ej: "google,facebook". */
+  authProviders: (import.meta.env.VITE_AUTH_PROVIDERS ?? '').split(',').map((p) => p.trim().toLowerCase()).filter(Boolean),
   defaultCity: 'villarrica',
   defaultCenter: { lat: -39.2826, lng: -72.2272 },
   appVersion: __APP_VERSION__,

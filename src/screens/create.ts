@@ -1,9 +1,10 @@
 import { t } from '../i18n';
-import { html, mount, $, onAction, busy, inputValue, raw } from '../lib/dom';
+import { html, mount, $, $opt, onAction, busy, inputValue, raw } from '../lib/dom';
 import { confirmAction, paymentsNotice, screenHeader, toast } from '../lib/ui';
 import { createRequest } from '../lib/api';
 import { friendlyError } from '../lib/errors';
-import { getCurrentPosition } from '../lib/geo';
+import { getCurrentPosition, round6 } from '../lib/geo';
+import { createMap, pinIcon, type MtigoMap } from '../lib/map';
 import { validateRequestDraft, type RequestDraft, LIMITS } from '../lib/validation';
 import { EVIDENCE_LABEL, formatClp, type EvidenceType } from '../lib/format';
 import { go } from '../lib/router';
@@ -16,11 +17,11 @@ const EXPIRY_OPTIONS: [number, string][] = [
 ];
 const RADIUS_OPTIONS = [200, 500, 1000, 2000, 5000];
 
-export function renderCreate(root: HTMLElement): void {
+export function renderCreate(root: HTMLElement): () => void {
   // Identificador único por formulario: un doble toque nunca crea dos solicitudes.
   const clientRequestId = crypto.randomUUID();
   const city = state.profile?.city_slug ?? config.defaultCity;
-  let coords: { lat: number; lng: number; accuracy: number } | null = null;
+  let coords: { lat: number; lng: number; accuracy: number | null } | null = null;
 
   mount(root, html`
     ${screenHeader(t('createTitle'), '#/explorar')}
@@ -71,27 +72,64 @@ export function renderCreate(root: HTMLElement): void {
     </div>`);
 
   const locBox = $('#loc', root);
-  function drawLocation(): void {
-    if (!coords) {
-      mount(locBox, html`<button type="button" class="btn btn-secondary btn-sm" data-action="loc">📍 ${t('useMyLocation')}</button>
-        <p class="muted small">Opcional. Si no la compartes, basta con la dirección escrita.</p>`);
-      return;
+  let picker: MtigoMap | null = null;
+  let marker: import('leaflet').Marker | null = null;
+
+  function setCoords(c: { lat: number; lng: number; accuracy: number | null } | null): void {
+    coords = c;
+    const info = $opt('#loc-info', locBox);
+    const radius = $opt('#radius-box', locBox);
+    if (info) info.innerHTML = c
+      ? html`✅ ${t('locationAdded')}${c.accuracy ? ` (±${c.accuracy} m)` : ''} · <button type="button" class="link" data-action="noloc">${t('removeLocation')}</button>`.value
+      : html`<span class="muted small">Toca el mapa para marcar el lugar exacto (opcional).</span>`.value;
+    if (radius) radius.hidden = !c;
+    if (picker) {
+      if (c && !marker) {
+        marker = picker.L.marker([c.lat, c.lng], { draggable: true, icon: pinIcon(picker.L) }).addTo(picker.map);
+        marker.on('dragend', () => { const p = marker!.getLatLng(); coords = { lat: round6(p.lat), lng: round6(p.lng), accuracy: null }; setCoords(coords); });
+      } else if (c && marker) marker.setLatLng([c.lat, c.lng]);
+      else if (!c && marker) { marker.remove(); marker = null; }
     }
-    mount(locBox, html`<div class="notice notice-teal">✅ ${t('locationAdded')} (±${coords.accuracy} m)
-        <button type="button" class="link" data-action="noloc">${t('removeLocation')}</button></div>
-      <label class="label" for="radius">${t('radius')}</label>
-      <select class="input" id="radius">${RADIUS_OPTIONS.map((r) => html`<option value="${r}" ${r === 500 ? raw('selected') : ''}>${r < 1000 ? `${r} m` : `${r / 1000} km`}</option>`)}</select>`);
   }
-  drawLocation();
+
+  mount(locBox, html`
+    <div class="row gap wrap">
+      <button type="button" class="btn btn-secondary btn-sm" data-action="openmap">🛰️ Marcar en el mapa</button>
+      <button type="button" class="btn btn-secondary btn-sm" data-action="loc">📍 ${t('useMyLocation')}</button>
+    </div>
+    <div id="pick-map" class="map map-sm" hidden></div>
+    <p id="loc-info" class="small"></p>
+    <div id="radius-box" hidden>
+      <label class="label" for="radius">${t('radius')}</label>
+      <select class="input" id="radius">${RADIUS_OPTIONS.map((r) => html`<option value="${r}" ${r === 500 ? raw('selected') : ''}>${r < 1000 ? `${r} m` : `${r / 1000} km`}</option>`)}</select>
+    </div>`);
+  setCoords(null);
+
+  async function openMap(center?: { lat: number; lng: number }): Promise<void> {
+    const el = $('#pick-map', locBox);
+    el.hidden = false;
+    if (!picker) {
+      picker = await createMap(el, center ?? state.lastCoords ?? config.defaultCenter, 16);
+      picker.map.on('click', (e: import('leaflet').LeafletMouseEvent) => setCoords({ lat: round6(e.latlng.lat), lng: round6(e.latlng.lng), accuracy: null }));
+      if (coords) { const c = coords; marker = null; setCoords(c); }
+    } else if (center) picker.map.setView([center.lat, center.lng], 17, { animate: false });
+  }
 
   onAction(root, {
     reward: (el) => { ($('#reward', root) as HTMLInputElement).value = el.dataset.v ?? '1000'; },
+    openmap: () => void openMap(),
     loc: async (el) => {
+      const label = el.textContent;
       el.textContent = '📍 …';
-      try { coords = await getCurrentPosition(); state.lastCoords = coords; } catch { toast(t('locationDenied'), 'error'); }
-      drawLocation();
+      try {
+        const c = await getCurrentPosition();
+        state.lastCoords = c;
+        await openMap(c);
+        setCoords(c);
+      } catch { toast(t('locationDenied'), 'error'); }
+      el.textContent = label;
     },
-    noloc: () => { coords = null; drawLocation(); },
+    noloc: () => setCoords(null),
   });
 
   const form = $('#f', root) as HTMLFormElement;
@@ -133,4 +171,5 @@ export function renderCreate(root: HTMLElement): void {
       }
     });
   });
+  return () => picker?.destroy();
 }

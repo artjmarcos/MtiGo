@@ -3,14 +3,17 @@
 // rol "authenticated" y el JWT del usuario en request.jwt.claims.
 import EmbeddedPostgres from 'embedded-postgres';
 import pg from 'pg';
-import { readFileSync, rmSync } from 'node:fs';
+import { readFileSync, readdirSync, rmSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const STUB = readFileSync(path.join(root, 'supabase/local/00_supabase_stub.sql'), 'utf8');
-const MIGRATION = readFileSync(path.join(root, 'supabase/migrations/20261120000001_mtigo_mvp.sql'), 'utf8');
+// Todas las migraciones en orden, salvo la de pg_cron (extensión no disponible localmente).
+export const MIGRATION = readdirSync(path.join(root, 'supabase/migrations'))
+  .filter((f) => f.endsWith('.sql') && !f.includes('vencimiento_automatico')).sort()
+  .map((f) => readFileSync(path.join(root, 'supabase/migrations', f), 'utf8')).join('\n;\n');
 
 export class TestDb {
   constructor(port = 54000 + Math.floor(Math.random() * 1000)) {
