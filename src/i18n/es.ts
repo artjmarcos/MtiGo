@@ -87,7 +87,7 @@ export const es = {
   evidenceType: 'Evidencia requerida',
   rewardClp: 'Recompensa (CLP)',
   address: 'Dirección o lugar',
-  addressPh: 'Ej: Pedro de Valdivia 500, Villarrica',
+  addressPh: 'Ej: calle y número, o nombre del lugar',
   useMyLocation: 'Usar mi ubicación actual',
   locationAdded: 'Ubicación agregada',
   removeLocation: 'Quitar',
@@ -95,7 +95,7 @@ export const es = {
   radius: 'Radio de búsqueda',
   expiresIn: 'Vence en',
   publish: 'Publicar solicitud',
-  publishConfirm: '¿Publicar esta solicitud? Será visible para usuarios de Villarrica.',
+  publishConfirm: '¿Publicar esta solicitud? Será visible para los usuarios de tu ciudad.',
   published: 'Solicitud publicada',
 
   // Detalle
