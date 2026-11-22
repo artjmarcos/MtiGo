@@ -245,3 +245,11 @@ textarea.input { resize: vertical; }
 .auth-links { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: .92rem; }
 .boot { background: linear-gradient(160deg, #66bb6a, #00897b); }
 .hero-top[style*="flex:0"] + .sheet { flex: 1; }
+
+/* v0.3: logotipo "Dos que se ayudan" */
+.logo-badge { display: grid; place-items: center; width: calc(var(--s) * 1.45); height: calc(var(--s) * 1.45); border-radius: 30%;
+  background: #fff8f0; box-shadow: 0 6px 18px rgb(0 0 0 / .18); flex: none; }
+.logo-badge .logo-mark { filter: none; }
+.brand-dark .brand-go { color: #b2dfdb; }
+.brand-dark .brand-bang { color: #ffb74d; }
+.boot { background: #fff8f0; }
