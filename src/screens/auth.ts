@@ -69,7 +69,7 @@ export function renderWelcome(root: HTMLElement): void {
         ${socialButtons()}
         <a class="btn btn-primary btn-lg" href="#/registro">✉️ ${t('welcomeSignup')}</a>
         <a class="btn btn-secondary btn-lg" href="#/ingresar">${t('welcomeLogin')}</a>
-        <p class="legal-note">Piloto en Villarrica, La Araucanía · <a href="#/legal/privacidad">${t('privacy')}</a></p>
+        <p class="legal-note">Piloto en La Araucanía · <a href="#/legal/privacidad">${t('privacy')}</a></p>
       </div>
     </section>`);
   bindSocial(root);
@@ -225,7 +225,7 @@ export function renderTerms(root: HTMLElement): void {
       ${hero(true, name ? `¡Hola, ${name}!` : '¡Bienvenido!')}
       <div class="sheet">
         <h2>Antes de comenzar</h2>
-        <p class="small">MtiGo! conecta a personas de Villarrica para compartir información real de lugares. Para usarla debes:</p>
+        <p class="small">MtiGo! conecta a personas de tu ciudad para compartir información real de lugares. Para usarla debes:</p>
         <label class="check"><input type="checkbox" id="terms" />
           <span>${t('acceptTermsLabel')} <a href="#/legal/terminos">${t('terms')}</a> ${t('and')} <a href="#/legal/privacidad">${t('privacy')}</a>.</span></label>
         <p class="field-error" id="err" role="alert" hidden></p>

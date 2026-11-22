@@ -45,6 +45,8 @@ describe('Migración', () => {
     await admin.query(MIGRATION); // todas las migraciones, en orden
     const { rows } = await admin.query(`select count(*)::int n from public.categories`);
     assert.equal(rows[0].n, 8);
+    const cities = await admin.query(`select slug from public.cities where active order by slug`);
+    assert.deepEqual(cities.rows.map((r) => r.slug), ['temuco', 'villarrica']);
   });
 });
 
