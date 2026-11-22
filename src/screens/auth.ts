@@ -51,7 +51,7 @@ function field(id: string, label: string, icon: string, type = 'text', extra: Ra
 
 function hero(compact: boolean, title?: string): Raw {
   return html`<div class="hero-top" style="${compact ? 'flex:0 0 auto;padding-bottom:28px' : ''}">
-    ${logo({ size: compact ? 56 : 92 })}
+    ${logo({ size: compact ? 44 : 72 })}
     ${title ? html`<h1>${title}</h1>` : ''}
   </div>`;
 }
@@ -60,7 +60,7 @@ export function renderWelcome(root: HTMLElement): void {
   mount(root, html`
     <section class="hero">
       <div class="hero-top">
-        ${logo({ size: 104 })}
+        ${logo({ size: 76 })}
         <h1>${t('tagline')}</h1>
         <p class="sub">Pregunta a personas que están en el lugar y recibe fotos y respuestas antes de salir.</p>
         <div class="hero-chips"><span>🏦 ¿Hay fila?</span><span>🏪 ¿Está abierto?</span><span>🏥 ¿Cuánta espera?</span><span>🏖️ ¿Cómo está la playa?</span></div>
