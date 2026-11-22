@@ -46,7 +46,7 @@ describe('Migración', () => {
     const { rows } = await admin.query(`select count(*)::int n from public.categories`);
     assert.equal(rows[0].n, 8);
     const cities = await admin.query(`select slug from public.cities where active order by slug`);
-    assert.deepEqual(cities.rows.map((r) => r.slug), ['temuco', 'villarrica']);
+    assert.deepEqual(cities.rows.map((r) => r.slug), ['curacautin', 'pucon', 'temuco', 'villarrica']);
   });
 });
 
@@ -123,7 +123,7 @@ describe('Creación de solicitudes (validación en servidor)', () => {
       [{ p_reward_clp: 50 }, 'INVALID_REWARD'],
       [{ p_reward_clp: 999999 }, 'INVALID_REWARD'],
       [{ p_address: '' }, 'INVALID_ADDRESS'],
-      [{ p_city_slug: 'pucon' }, 'INVALID_CITY'], // aún inactiva
+      [{ p_city_slug: 'santiago' }, 'INVALID_CITY'], // no existe
       [{ p_expires_at: inMinutes(2) }, 'INVALID_EXPIRY'],
       [{ p_expires_at: inMinutes(60 * 80) }, 'INVALID_EXPIRY'],
       [{ p_lat: -39.28, p_lng: null }, 'INVALID_LOCATION'],
