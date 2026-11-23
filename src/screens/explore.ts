@@ -143,7 +143,7 @@ async function drawMap(el: HTMLElement, items: ListedRequest[]): Promise<() => v
     const cat = categoryOf(r.category_slug);
     const lat = Number(r.lat); const lng = Number(r.lng);
     bounds.push([lat, lng]);
-    L.marker([lat, lng], { icon: pinIcon(L, `${cat.icon} ${escapeHtml(formatClp(r.reward_clp))}`), title: r.title }).addTo(map)
+    L.marker([lat, lng], { icon: pinIcon(L, `${escapeHtml(cat.icon)} ${escapeHtml(formatClp(r.reward_clp))}`), title: r.title }).addTo(map)
       .on('click', () => { location.hash = `#/solicitud/${r.id}`; });
   }
   if (bounds.length > 1) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17, animate: false });

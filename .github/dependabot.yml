@@ -1,0 +1,10 @@
+# Avisos automáticos de actualizaciones de seguridad (dependencias y acciones de GitHub).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
