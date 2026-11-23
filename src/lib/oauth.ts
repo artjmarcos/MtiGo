@@ -20,8 +20,15 @@ export function enabledProviders(): OAuthProvider[] {
   return config.authProviders.filter((p): p is OAuthProvider => p === 'google' || p === 'facebook');
 }
 
+// Protección contra "inyección de sesión": solo se acepta una vuelta de
+// login-callback si esta app inició el ingreso hace poco.
+let pendingSince = 0;
+const PENDING_MS = 10 * 60 * 1000;
+export function _setPendingForTests(ts: number): void { pendingSince = ts; }
+
 export async function signInWith(provider: OAuthProvider): Promise<void> {
   const native = Capacitor.isNativePlatform();
+  pendingSince = Date.now();
   const webReturn = config.publicWebUrl || `${location.origin}${location.pathname}`;
   const { data, error } = await sb().auth.signInWithOAuth({
     provider,
@@ -39,6 +46,9 @@ export async function signInWith(provider: OAuthProvider): Promise<void> {
 export async function handleCallbackUrl(url: string): Promise<string | null> {
   if (!url.startsWith(NATIVE_CALLBACK)) return null;
   await Browser.close().catch(() => undefined);
+  const expected = pendingSince > 0 && Date.now() - pendingSince < PENDING_MS;
+  pendingSince = 0;
+  if (!expected) return 'Enlace de ingreso no solicitado. Vuelve a tocar "Continuar con Google".';
   const u = new URL(url.replace(NATIVE_CALLBACK, 'https://callback.local/'));
   const params = new URLSearchParams(u.hash.replace(/^#/, ''));
   u.searchParams.forEach((v, k) => { if (!params.has(k)) params.set(k, v); });

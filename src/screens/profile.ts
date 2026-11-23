@@ -88,7 +88,9 @@ export function renderProfile(root: HTMLElement): void {
       if (!res) return;
       await busy(btn, async () => {
         try {
-          // 1) Borra las fotos de Storage (la base de datos no puede borrar archivos).
+          // 1) Marca la eliminación en curso (habilita borrar las fotos entregadas) y
+          //    borra las fotos de Storage (la base de datos no puede borrar archivos).
+          await api.requestAccountDeletion();
           const paths = await api.myEvidencePaths();
           for (let i = 0; i < paths.length; i += 100) await api.deleteEvidenceObjects(paths.slice(i, i + 100));
           // 2) Borra la cuenta y todos sus datos en cascada.

@@ -200,5 +200,6 @@ export async function myBlocks(): Promise<{ blocked_id: string; name: string }[]
 }
 
 // ---------- cuenta ----------
+export function requestAccountDeletion() { return rpc<void>('request_account_deletion'); }
 export function myEvidencePaths() { return rpc<string[]>('my_evidence_paths'); }
 export function deleteMyAccount() { return rpc<void>('delete_my_account'); }

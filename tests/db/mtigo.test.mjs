@@ -437,14 +437,17 @@ describe('Moderación', () => {
   test('tres reportes distintos ocultan la solicitud', async () => {
     const r = await newRequest();
     const reporters = await Promise.all([1, 2, 3].map((i) => db.createUser(`Rep${i}`)));
-    for (const id of reporters) {
+    for (const [i, id] of reporters.entries()) {
       const s = await db.session(id);
       await s.rpc('report_content', { p_reason: 'spam', p_details: 'publicidad', p_request_id: r.id });
-      await s.rpc('report_content', { p_reason: 'spam', p_details: 'repetido', p_request_id: r.id }); // duplicado ignorado
+      if (i === 0) await s.rpc('report_content', { p_reason: 'spam', p_details: 'repetido', p_request_id: r.id }); // duplicado ignorado
     }
     const list = await sc.rpc('list_available_requests', {});
     assert.ok(!list.some((x) => x.id === r.id));
-    await expectError(sb.rpc('report_content', { p_reason: 'malo', p_request_id: r.id }), 'reports_reason_check');
+    // Una vez oculta, ya no se puede reportar ni ver.
+    await expectError(sb.rpc('report_content', { p_reason: 'spam', p_request_id: r.id }), 'MTIGO_NOT_FOUND');
+    const visible = await newRequest(await db.session(await db.createUser('Vale')));
+    await expectError(sb.rpc('report_content', { p_reason: 'malo', p_request_id: visible.id }), 'reports_reason_check');
   });
 });
 
