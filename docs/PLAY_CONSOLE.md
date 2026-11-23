@@ -93,9 +93,10 @@ No hay publicidad, analítica, identificadores de dispositivo ni datos financier
 | Permiso | Justificación |
 |---|---|
 | `INTERNET` | Conexión con el servidor de MtiGo! |
+| `CAMERA` | Tomar fotos de evidencia en el momento, dentro de la app. No se permite usar fotos de la galería, para que la información sea actual. |
 | `ACCESS_COARSE_LOCATION` / `ACCESS_FINE_LOCATION` | Solo en primer plano, cuando el usuario toca "Usar mi ubicación" (agregar el lugar a una solicitud) o "Cerca de mí" (ver solicitudes cercanas). Nunca en segundo plano. |
 
-La cámara se abre mediante la aplicación de cámara del sistema (intent), por eso **no** se solicita el permiso `CAMERA`. Tampoco se piden permisos de almacenamiento: las fotos se eligen con el selector del sistema.
+La cámara solo se usa mientras la persona está tomando una foto de evidencia. No se piden permisos de almacenamiento ni de galería.
 
 ## Clasificación de contenido (cuestionario IARC)
 - Categoría: Utilidades/Productividad/Comunicación/Otra.

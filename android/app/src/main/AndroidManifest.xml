@@ -46,7 +46,8 @@
     <!-- "Usar mi ubicación" y "Cerca de mí": solo cuando el usuario lo pide -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <!-- La cámara se abre con la app de cámara del sistema (intent): no requiere permiso CAMERA -->
+    <!-- Cámara en vivo dentro de la app para tomar fotos de evidencia (no se permite usar la galería) -->
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 </manifest>
