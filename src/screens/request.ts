@@ -3,7 +3,7 @@ import { html, mount, $, $opt, onAction, busy, raw, type Raw } from '../lib/dom'
 import { confirmAction, dialog, errorState, paymentsNotice, screenHeader, spinner, statusBadge, textToHtml, toast } from '../lib/ui';
 import * as api from '../lib/api';
 import { friendlyError } from '../lib/errors';
-import { compressImage } from '../lib/image';
+import { capturePhoto, syncServerTime } from '../lib/camera';
 import { mapsLink } from '../lib/geo';
 import { createMap, pinIcon, type MtigoMap } from '../lib/map';
 import { EVIDENCE_LABEL, STATUS_LABEL, effectiveStatus, formatClp, formatDateTime, relativeTime, timeRemaining } from '../lib/format';
@@ -140,8 +140,8 @@ export function renderRequest(root: HTMLElement, params: Record<string, string>)
         <span class="label">Fotos${needsPhoto ? ' *' : ' (opcional)'} · ${photos.length}/${LIMITS.maxPhotos}</span>
         <div class="photos">${photoItems()}</div>
         <div class="row gap" id="pickers" ${photos.length >= LIMITS.maxPhotos ? raw('hidden') : ''}>
-          <label class="btn btn-secondary grow">📷 ${t('takePhoto')}<input type="file" accept="image/*" capture="environment" data-pick hidden /></label>
-          <label class="btn btn-secondary grow">🖼️ ${t('gallery')}<input type="file" accept="image/*" multiple data-pick hidden /></label></div>
+          <button type="button" class="btn btn-teal btn-lg grow" data-action="camera">📷 ${t('takePhoto')}</button></div>
+        <p class="muted small">🔒 Las fotos se toman en el momento con la cámara de la app y llevan fecha y hora del servidor. No se aceptan fotos de la galería.</p>
         <p class="field-error" id="ev-err" role="alert" hidden></p>
         <button class="btn btn-primary btn-lg block" data-action="submit">📤 ${t('sendEvidence')}</button>
         <button class="btn btn-ghost block" data-action="release">${t('release')}</button>
@@ -155,7 +155,7 @@ export function renderRequest(root: HTMLElement, params: Record<string, string>)
       <div class="row between"><h3>${t('evidenceTitle')}</h3><span class="badge badge-${tone}">${s.status === 'entregada' ? 'Por revisar' : s.status === 'aprobada' ? 'Aprobada' : 'Rechazada'}</span></div>
       ${s.submitted_at ? html`<p class="muted small">Entregada ${formatDateTime(s.submitted_at)}</p>` : ''}
       <p>${s.body_text ? textToHtml(s.body_text) : html`<i class="muted">${t('noText')}</i>`}</p>
-      ${files.length ? html`<div class="photos">${files.map((f) => urls[f.storage_path]
+      ${files.length ? html`<p class="muted small">📷 Fotos tomadas con la cámara de MtiGo! · recibidas en el servidor ${formatDateTime(files[0].created_at)}</p><div class="photos">${files.map((f) => urls[f.storage_path]
         ? html`<a class="photo ok" href="${urls[f.storage_path]}" target="_blank" rel="noopener"><img src="${urls[f.storage_path]}" alt="Foto de evidencia" loading="lazy" /></a>`
         : html`<div class="photo error"><figcaption>No se pudo cargar</figcaption></div>`)}</div>` : ''}
       ${s.rejection_reason ? html`<p class="notice notice-red"><b>${t('rejectionReason')}:</b> ${s.rejection_reason}</p>` : ''}
@@ -196,31 +196,35 @@ export function renderRequest(root: HTMLElement, params: Record<string, string>)
     return submission;
   }
 
-  async function addPhotos(files: FileList): Promise<void> {
-    const room = LIMITS.maxPhotos - photos.length;
-    const list = Array.from(files).slice(0, room);
-    if (files.length > room) toast(t('maxPhotos'), 'info');
-    for (const file of list) {
-      const p: LocalPhoto = { key: crypto.randomUUID(), url: URL.createObjectURL(file), status: 'uploading' };
-      photos.push(p);
-      redrawActions();
-      try {
-        const s = await ensureSubmission();
-        const blob = await compressImage(file);
-        const path = evidencePath(id, s.id, crypto.randomUUID(), 'jpg');
-        await api.uploadEvidence(path, blob, 'image/jpeg');
-        try {
-          const f = await api.addEvidenceFile(s.id, path, 'image/jpeg', blob.size);
-          p.fileId = f.id; p.path = path; p.status = 'ok';
-        } catch (e) {
-          await api.deleteEvidenceObjects([path]).catch(() => undefined);
-          throw e;
-        }
-      } catch (e) {
-        p.status = 'error'; p.error = friendlyError(e);
-      }
-      redrawActions();
+  async function takePhoto(): Promise<void> {
+    if (!req) return;
+    if (photos.length >= LIMITS.maxPhotos) { toast(t('maxPhotos'), 'info'); return; }
+    let blob: Blob | null;
+    try {
+      blob = await capturePhoto({ city: cityName(req.city_slug), requestId: id });
+    } catch (e) {
+      toast(e instanceof Error ? e.message : t('uploadFailed'), 'error');
+      return;
     }
+    if (!blob) return;
+    const p: LocalPhoto = { key: crypto.randomUUID(), url: URL.createObjectURL(blob), status: 'uploading' };
+    photos.push(p);
+    redrawActions();
+    try {
+      const s = await ensureSubmission();
+      const path = evidencePath(id, s.id, crypto.randomUUID(), 'jpg');
+      await api.uploadEvidence(path, blob, 'image/jpeg');
+      try {
+        const f = await api.addEvidenceFile(s.id, path, 'image/jpeg', blob.size);
+        p.fileId = f.id; p.path = path; p.status = 'ok';
+      } catch (e) {
+        await api.deleteEvidenceObjects([path]).catch(() => undefined);
+        throw e;
+      }
+    } catch (e) {
+      p.status = 'error'; p.error = friendlyError(e);
+    }
+    redrawActions();
   }
 
   function redrawActions(): void {
@@ -240,12 +244,6 @@ export function renderRequest(root: HTMLElement, params: Record<string, string>)
     }
   }
 
-  body.addEventListener('change', (ev) => {
-    const input = ev.target as HTMLInputElement;
-    if (input.matches('[data-pick]') && input.files?.length) {
-      void addPhotos(input.files).finally(() => { input.value = ''; });
-    }
-  });
 
   body.addEventListener('submit', (ev) => {
     const form = ev.target as HTMLFormElement;
@@ -278,6 +276,7 @@ export function renderRequest(root: HTMLElement, params: Record<string, string>)
 
   onAction(body, {
     retry: () => void load(),
+    camera: () => void takePhoto(),
     accept: async (btn) => {
       if (!(await confirmAction(t('accept'), t('acceptConfirm')))) return;
       await run(btn, () => api.acceptRequest(id), t('accepted'));
@@ -350,6 +349,7 @@ export function renderRequest(root: HTMLElement, params: Record<string, string>)
   });
 
   void load();
+  void syncServerTime();
   msgTimer = window.setInterval(() => { if (document.visibilityState === 'visible') void refreshMessages(); }, 20000);
   // Actualiza el estado cuando la otra persona actúa (sin interrumpir si estás escribiendo o subiendo fotos).
   const stateTimer = window.setInterval(() => {

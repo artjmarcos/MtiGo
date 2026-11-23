@@ -52,7 +52,7 @@ try {
 
   rmSync(SHOTS, { recursive: true, force: true });
   mkdirSync(SHOTS, { recursive: true });
-  browser = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage', '--lang=es-CL'] });
+  browser = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage', '--lang=es-CL', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
 
   async function phone(label) {
     const ctx = await browser.createBrowserContext();
@@ -176,9 +176,16 @@ try {
   await B.page.click('[data-action="submit"]');
   await waitText(B, 'requiere al menos una foto');
   check('Validación: sin foto no permite enviar', true);
-  const gallery = await B.page.$('input[data-pick][multiple]');
-  await gallery.uploadFile(photo);
+  check('No hay selector de galería ni de archivos en la entrega', (await B.page.$$('.deliver input[type="file"]')).length === 0);
+  await B.ctx.overridePermissions(APP, ['camera']);
+  await B.page.click('[data-action="camera"]');
+  await B.page.waitForSelector('.camera video');
+  await B.page.waitForFunction(() => { const v = document.querySelector('.camera video'); return v && v.videoWidth > 0; }, { timeout: 15000 });
+  await shot(B, '05a-camara');
+  await B.page.click('.camera [data-c="shot"]');
+  await B.page.waitForSelector('.camera', { hidden: true });
   await B.page.waitForFunction(() => document.querySelector('.photo.ok') !== null, { timeout: 20000 });
+  check('Foto tomada con la cámara en vivo de la app', true);
   await B.page.type('#ev-text', 'Hay solo 3 personas en la fila y 2 cajas atendiendo.');
   await shot(B, '05-entregar-evidencia');
   await B.page.click('[data-action="submit"]');
@@ -187,6 +194,22 @@ try {
   check('5. B entrega fotografía y texto', true);
   const [obj] = (await stack.admin.query(`select name, metadata from storage.objects where name like $1`, [`${reqId}/%`])).rows;
   check('La foto quedó en Storage privado y comprimida', obj && obj.metadata.size < 1_000_000, `${obj?.metadata.size} bytes`);
+  {
+    // Marca de agua: franja inferior con borde naranja a la izquierda y texto blanco.
+    const file = path.join('/tmp/mtigo-e2e/storage', 'evidence', obj.name);
+    await sharp(file).toFile(path.join(SHOTS, '05b-foto-con-marca.jpg'));
+    const meta = await sharp(file).metadata();
+    const size = Math.max(16, Math.round(meta.width / 38));
+    const bandH = size * 2 + Math.round(size * 0.6) * 3;
+    const region = async (r) => sharp(await sharp(file).extract(r).png().toBuffer()).stats();
+    const stripe = await region({ left: 0, top: meta.height - bandH + 4, width: 3, height: bandH - 8 });
+    const [r, g, b] = stripe.channels.map((c) => c.mean);
+    const text = await region({ left: size, top: meta.height - bandH, width: Math.round(meta.width * 0.6), height: bandH });
+    const top = await region({ left: size, top: 0, width: Math.round(meta.width * 0.6), height: bandH });
+    const noTextOnTop = top.channels.slice(0, 3).some((c) => c.max < 235);
+    const whiteText = text.channels.slice(0, 3).every((c) => c.max >= 235);
+    check('La foto tiene la marca de agua (borde naranja y texto)', r > 180 && b < 110 && g > 90 && whiteText && noTextOnTop, `rgb=${r.toFixed(0)},${g.toFixed(0)},${b.toFixed(0)} textoBlanco=${whiteText}`);
+  }
 
   // ---- 6. A revisa ----
   await open(A, `#/avisos`);

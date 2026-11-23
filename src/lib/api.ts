@@ -39,7 +39,7 @@ export interface Submission {
   rejection_reason: string | null; created_at: string; submitted_at: string | null; reviewed_at: string | null;
 }
 
-export interface EvidenceFile { id: string; submission_id: string; storage_path: string; mime_type: string; size_bytes: number }
+export interface EvidenceFile { id: string; submission_id: string; storage_path: string; mime_type: string; size_bytes: number; created_at: string }
 export interface HistoryRow { id: number; from_status: RequestStatus | null; to_status: RequestStatus; actor_id: string | null; note: string | null; created_at: string }
 export interface Message { id: string; request_id: string; sender_id: string; body: string; created_at: string }
 export interface Notification { id: string; kind: string; request_id: string | null; title: string; body: string; read_at: string | null; created_at: string }
@@ -102,6 +102,7 @@ export function listAvailable(f: ListFilters) {
     p_search: f.search || null, p_lat: f.lat, p_lng: f.lng, p_radius_km: f.radiusKm, p_limit: 100, p_offset: 0,
   });
 }
+export function serverTime() { return rpc<string>('server_time'); }
 export function expireOverdue() { return rpc<number>('expire_overdue_requests'); }
 
 export async function getRequest(id: string): Promise<RequestRow | null> {
