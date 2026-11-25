@@ -114,7 +114,7 @@ jobs:
           cp android/app/build/outputs/bundle/release/app-release.aab "out/MtiGo-${{ inputs.version_name }}-${{ inputs.version_code }}.aab"
           cp android/app/build/outputs/apk/release/app-release.apk "out/MtiGo-${{ inputs.version_name }}-${{ inputs.version_code }}.apk"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: MtiGo-android-${{ inputs.version_name }}-${{ inputs.version_code }}
           path: out/
