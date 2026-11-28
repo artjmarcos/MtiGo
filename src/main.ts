@@ -22,6 +22,7 @@ import { renderActivity } from './screens/activity';
 import { renderNotifications } from './screens/notifications';
 import { renderProfile } from './screens/profile';
 import { renderLegal } from './screens/legal';
+import { renderStory } from './screens/story';
 
 type Renderer = (root: HTMLElement, params: Record<string, string>) => void | (() => void);
 
@@ -94,14 +95,14 @@ function render(): void {
   if (PRIVATE[route.name] && !logged) { go('/bienvenida', true); return; }
   if (PUBLIC[route.name] && logged) { go('/explorar', true); return; }
   // Cuentas creadas con Google/Facebook: aceptación explícita de términos.
-  if (logged && state.profile && !state.profile.accepted_terms_at && route.name !== 'terms' && route.name !== 'legal') { go('/terminos', true); return; }
+  if (logged && state.profile && !state.profile.accepted_terms_at && route.name !== 'terms' && route.name !== 'legal' && route.name !== 'story') { go('/terminos', true); return; }
   if (route.name === 'terms' && state.profile?.accepted_terms_at) { go('/explorar', true); return; }
 
   if (typeof cleanup === 'function') cleanup();
   cleanup = undefined;
   screen.scrollTop = 0;
   window.scrollTo(0, 0);
-  const renderer = route.name === 'legal' ? renderLegal : (PRIVATE[route.name] ?? PUBLIC[route.name]);
+  const renderer = route.name === 'legal' ? renderLegal : route.name === 'story' ? renderStory : (PRIVATE[route.name] ?? PUBLIC[route.name]);
   const showNav = navVisible(route.name);
   drawNav(nav, route.name, showNav);
   document.body.classList.toggle('has-nav', showNav);
