@@ -38,7 +38,7 @@ jobs:
           VITE_PUBLIC_WEB_URL: ${{ vars.VITE_PUBLIC_WEB_URL }}
           VITE_SUPPORT_EMAIL: ${{ vars.VITE_SUPPORT_EMAIL }}
         run: npm run build
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
