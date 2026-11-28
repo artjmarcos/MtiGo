@@ -14,6 +14,7 @@ const PATTERNS: [string, RegExp, string[]][] = [
   ['activity', /^\/actividad$/, []],
   ['notifications', /^\/avisos$/, []],
   ['profile', /^\/perfil$/, []],
+  ['story', /^\/historia$/, []],
   ['legal', /^\/legal\/(privacidad|terminos|eliminar-cuenta)$/, ['doc']],
 ];
 

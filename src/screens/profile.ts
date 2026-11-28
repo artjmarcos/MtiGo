@@ -44,6 +44,7 @@ export function renderProfile(root: HTMLElement): void {
             : html`<p class="muted small">${t('noBlocked')}</p>`}
         </section>
         <section class="card stack">
+          <a href="#/historia">💚 Nuestra historia</a>
           <a href="#/legal/terminos">📄 ${t('terms')}</a>
           <a href="#/legal/privacidad">🔒 ${t('privacy')}</a>
           ${config.supportEmail ? html`<a href="mailto:${config.supportEmail}">✉️ ${t('contact')}: ${config.supportEmail}</a>` : ''}

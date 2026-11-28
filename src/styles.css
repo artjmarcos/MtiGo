@@ -266,3 +266,10 @@ textarea.input { resize: vertical; }
 .camera-shutter:active { transform: scale(.94); }
 .camera.flash::after { content: ''; position: absolute; inset: 0; background: #fff; animation: flash .25s ease forwards; }
 @keyframes flash { from { opacity: .9; } to { opacity: 0; } }
+
+/* Nuestra historia */
+.story { line-height: 1.7; font-size: 1.05rem; }
+.story-mark { display: grid; place-items: center; margin: 8px 0 4px; }
+.story-lead { font-family: var(--brand-font); font-weight: 800; font-size: 1.3rem; color: var(--green-d); text-align: center; margin: 0; }
+.story p { margin: 0; }
+.story-end { font-family: var(--brand-font); font-weight: 700; text-align: center; color: var(--teal-d); margin-top: 6px !important; }

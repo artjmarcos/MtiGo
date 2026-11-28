@@ -48,6 +48,9 @@ PRIVACIDAD Y SEGURIDAD
 PILOTO EN VILLARRICA
 MtiGo! está en etapa piloto en Villarrica, Región de La Araucanía.
 Los pagos aún no están habilitados: la recompensa que indicas es solo referencial y la app no cobra ni transfiere dinero.
+
+NUESTRA HISTORIA
+MtiGo! nació en Villarrica para Mati, una joven para quien la incertidumbre de salir es muy difícil. Su nombre viene de "Mati" y "go" (ir). Creemos que saber antes de salir puede hacer la vida más tranquila para muchas personas: familias, adultos mayores y quienes viven con ansiedad. Por eso creamos una comunidad que presta sus ojos a otros.
 ```
 
 **Categoría:** Viajes y guías locales (alternativa: Herramientas) · **Etiquetas:** información local, comunidad.

@@ -69,7 +69,7 @@ export function renderWelcome(root: HTMLElement): void {
         ${socialButtons()}
         <a class="btn btn-primary btn-lg" href="#/registro">✉️ ${t('welcomeSignup')}</a>
         <a class="btn btn-secondary btn-lg" href="#/ingresar">${t('welcomeLogin')}</a>
-        <p class="legal-note">Piloto en La Araucanía · <a href="#/legal/privacidad">${t('privacy')}</a></p>
+        <p class="legal-note"><a href="#/historia">💚 Nuestra historia</a> · Piloto en La Araucanía · <a href="#/legal/privacidad">${t('privacy')}</a></p>
       </div>
     </section>`);
   bindSocial(root);

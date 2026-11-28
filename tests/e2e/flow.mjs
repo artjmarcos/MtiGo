@@ -115,6 +115,11 @@ try {
   await A.page.goto(APP, { waitUntil: 'networkidle0' });
   await waitText(A, 'Información real del lugar');
   await shot(A, '01-bienvenida');
+  await A.page.click('a[href="#/historia"]');
+  await waitText(A, 'Así nació MtiGo!');
+  check('"Nuestra historia" visible desde la bienvenida', (await text(A)).includes('por Mati y por ir'));
+  await shot(A, '00-nuestra-historia');
+  await A.page.goto(APP, { waitUntil: 'networkidle0' });
   await A.page.goto(`${APP}#/ingresar`, { waitUntil: 'networkidle0' });
   await A.page.waitForSelector('#email');
   await shot(A, '01b-ingresar');
